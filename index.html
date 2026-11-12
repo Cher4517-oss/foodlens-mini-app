@@ -1,726 +1,460 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>ЭкоСкан · FoodLens AI — Telegram Mini App</title>
-  <!-- Официальный Telegram WebApp SDK -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg-canvas: #F6F7F9;
-      --card-border: rgba(255, 255, 255, 0.72);
-      --text-primary: #14171F;
-      --text-secondary: #6E7687;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ЭкоСкан — Анализ продуктов</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg-color: #F6F7F9;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --text-main: #1C1C1E;
+            --text-secondary: #8E8E93;
+            --accent-green: #34C759;
+            --accent-orange: #FF9500;
+            --accent-pink: #FF2D55;
+            --font-led: 'Courier New', Courier, monospace;
+        }
 
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-    body {
-      margin: 0;
-      background-color: var(--bg-canvas);
-      color: var(--text-primary);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 16px;
+            padding-bottom: 90px;
+            max-width: 480px;
+            margin: 0 auto;
+        }
 
-    /* Фоновый паттерн с микро-точками в стиле RonDesignLab */
-    .dot-grid-bg {
-      background-color: #F6F7F9;
-      background-image: radial-gradient(rgba(160, 170, 190, 0.24) 1px, transparent 1px);
-      background-size: 16px 16px;
-    }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
 
-    /* Контейнер Telegram Mini App */
-    .tma-shell {
-      width: 100%;
-      min-height: 100vh;
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
+        .app-title {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
 
-    @media (min-width: 480px) {
-      body {
-        padding: 20px;
-        background: radial-gradient(circle at 20% 20%, #eef2f7 0%, #dde3ec 100%);
-      }
-      .tma-shell {
-        width: 390px;
-        height: 844px;
-        min-height: 844px;
-        max-height: 844px;
-        border-radius: 44px;
-        box-shadow:
-          0 30px 70px -15px rgba(17, 24, 39, 0.18),
-          0 0 0 10px #1A1D24,
-          0 0 0 11.5px rgba(255, 255, 255, 0.4);
-      }
-    }
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.04);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
 
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
+        .user-avatar {
+            width: 24px;
+            height: 24px;
+            background: #007AFF;
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+        }
 
-    /* Меш-градиенты карточек */
-    .mesh-hero {
-      background:
-        radial-gradient(circle at 15% 20%, rgba(72, 189, 214, 0.88) 0%, transparent 55%),
-        radial-gradient(circle at 82% 25%, rgba(188, 178, 238, 0.85) 0%, transparent 55%),
-        radial-gradient(circle at 55% 90%, rgba(235, 168, 196, 0.75) 0%, transparent 60%),
-        linear-gradient(135deg, #64B6CE 0%, #B2C6E4 52%, #DFC2D9 100%);
-      box-shadow: 0 18px 36px -12px rgba(84, 152, 184, 0.35), inset 0 1.5px 1px rgba(255, 255, 255, 0.78);
-    }
+        /* Capsule Trend */
+        .trend-capsule {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
 
-    .mesh-sugar {
-      background:
-        radial-gradient(circle at 25% 18%, rgba(236, 98, 210, 0.92) 0%, transparent 58%),
-        radial-gradient(circle at 85% 32%, rgba(242, 158, 134, 0.85) 0%, transparent 55%),
-        radial-gradient(circle at 45% 92%, rgba(84, 128, 114, 0.92) 0%, transparent 65%),
-        linear-gradient(160deg, #E267CE 0%, #B7879E 52%, #597B71 100%);
-      box-shadow: 0 16px 30px -10px rgba(196, 92, 172, 0.32), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.8);
-    }
+        .trend-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
 
-    .mesh-protein {
-      background:
-        radial-gradient(circle at 82% 28%, rgba(65, 92, 214, 0.92) 0%, transparent 62%),
-        radial-gradient(circle at 20% 20%, rgba(114, 126, 168, 0.88) 0%, transparent 60%),
-        radial-gradient(circle at 50% 95%, rgba(188, 206, 238, 0.95) 0%, transparent 65%),
-        linear-gradient(155deg, #6A769C 0%, #5872C8 52%, #B9CBEB 100%);
-      box-shadow: 0 16px 30px -10px rgba(74, 102, 198, 0.28), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.8);
-    }
+        .trend-status {
+            font-weight: 600;
+            color: var(--text-main);
+        }
 
-    .mesh-additives {
-      background:
-        radial-gradient(circle at 80% 45%, rgba(244, 114, 38, 0.95) 0%, transparent 62%),
-        radial-gradient(circle at 38% 35%, rgba(235, 174, 82, 0.9) 0%, transparent 60%),
-        radial-gradient(circle at 12% 25%, rgba(196, 208, 224, 0.95) 0%, transparent 65%),
-        linear-gradient(135deg, #C7D2E0 0%, #E6A65C 48%, #F27229 100%);
-      box-shadow: 0 16px 30px -10px rgba(236, 122, 46, 0.28), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.8);
-    }
+        .progress-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 0, 0, 0.06);
+            border-radius: 3px;
+            overflow: hidden;
+        }
 
-    .mesh-nutri {
-      background:
-        radial-gradient(circle at 35% 75%, rgba(56, 178, 78, 0.95) 0%, transparent 65%),
-        radial-gradient(circle at 75% 22%, rgba(238, 192, 134, 0.9) 0%, transparent 60%),
-        linear-gradient(165deg, #E8C59B 0%, #8AC676 50%, #37AF52 100%);
-      box-shadow: 0 16px 30px -10px rgba(62, 176, 82, 0.28), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.8);
-    }
+        .progress-bar-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #34C759, #007AFF);
+            border-radius: 3px;
+            transition: width 0.6s ease;
+        }
 
-    .glass-pill {
-      background: rgba(255, 255, 255, 0.84);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 8px 24px -6px rgba(20, 25, 40, 0.07);
-    }
+        /* Bento Grid */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
 
-    .glass-badge {
-      background: rgba(255, 255, 255, 0.22);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.55);
-    }
+        .bento-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 120px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            position: relative;
+            overflow: hidden;
+        }
 
-    .glass-card-light {
-      background: rgba(255, 255, 255, 0.78);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border: 1px solid rgba(255, 255, 255, 0.92);
-      box-shadow: 0 10px 28px -10px rgba(17, 24, 39, 0.06);
-    }
+        .bento-card.full-width {
+            grid-column: span 2;
+        }
 
-    .led-glow {
-      filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.65));
-    }
+        .bento-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
 
-    @keyframes scanLine {
-      0% { top: 12%; opacity: 0.3; }
-      50% { top: 84%; opacity: 1; }
-      100% { top: 12%; opacity: 0.3; }
-    }
-    .scanner-laser {
-      animation: scanLine 2.2s ease-in-out infinite;
-    }
+        .bento-value {
+            font-family: var(--font-led);
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-top: 8px;
+        }
 
-    .sheet-backdrop {
-      transition: opacity 0.28s ease;
-    }
-    .sheet-panel {
-      transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
-    }
+        /* Mesh Gradients */
+        .mesh-green { background: linear-gradient(135deg, rgba(52, 199, 89, 0.15), rgba(0, 122, 255, 0.05)); }
+        .mesh-orange { background: linear-gradient(135deg, rgba(255, 149, 0, 0.15), rgba(255, 45, 85, 0.05)); }
+        .mesh-pink { background: linear-gradient(135deg, rgba(255, 45, 85, 0.15), rgba(175, 82, 222, 0.05)); }
 
-    .pressable {
-      transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
-    }
-    .pressable:active {
-      transform: scale(0.97);
-    }
-  </style>
+        /* Scanner Trigger Card */
+        .scanner-card {
+            background: linear-gradient(135deg, #1C1C1E, #2C2C2E);
+            color: #fff;
+            border-radius: 24px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            margin-bottom: 16px;
+        }
+
+        .scanner-info h3 {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .scanner-info p {
+            font-size: 12px;
+            color: #8E8E93;
+        }
+
+        .scanner-icon-btn {
+            width: 48px;
+            height: 48px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        /* Camera Modal Overlay */
+        #camera-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            z-index: 1000;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+        }
+
+        #camera-feed {
+            width: 100%;
+            height: 70vh;
+            object-fit: cover;
+            border-radius: 24px;
+        }
+
+        .camera-controls {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .btn-capture {
+            width: 70px; height: 70px;
+            background: #fff;
+            border-radius: 50%;
+            border: 4px solid rgba(255,255,255,0.4);
+            cursor: pointer;
+        }
+
+        .btn-close-cam {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-weight: 600;
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 16px;
+            left: 16px;
+            right: 16px;
+            background: rgba(28, 28, 30, 0.9);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            max-width: 448px;
+            margin: 0 auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .nav-item {
+            color: #8E8E93;
+            text-align: center;
+            font-size: 10px;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: #fff;
+        }
+
+        .nav-item span {
+            font-size: 18px;
+        }
+
+        /* Diary log list */
+        .diary-section {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+
+        .diary-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .diary-empty {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .diary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+            font-size: 13px;
+        }
+    </style>
 </head>
 <body>
 
-  <div id="app" class="tma-shell dot-grid-bg select-none">
-
-    <!-- Шапка Telegram Mini App -->
-    <header class="sticky top-0 z-30 pt-3 pb-2 px-4 bg-[#F6F7F9]/80 backdrop-blur-md">
-      <!-- Статус-бар (синхронизируется с Telegram ThemeParams если доступно) -->
-      <div class="flex items-center justify-between text-[11px] font-semibold text-slate-800 mb-2.5 px-1">
-        <span id="tg-username">EcoScan Mini App</span>
-        <div class="flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span id="tg-status-text" class="text-slate-600">Telegram WebApp SDK Active</span>
+    <header>
+        <div class="app-title">ЭкоСкан</div>
+        <div class="user-badge">
+            <div class="user-avatar" id="user-initial">М</div>
+            <span id="user-name">Макс</span>
         </div>
-      </div>
-
-      <div class="flex items-center justify-between">
-        <button onclick="closeApp()" class="h-8 px-3 rounded-full bg-white/85 border border-white shadow-sm flex items-center gap-1.5 text-[12px] font-medium text-slate-700 pressable">
-          <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-          <span>Закрыть</span>
-        </button>
-
-        <div class="flex flex-col items-center">
-          <div class="flex items-center gap-1.5">
-            <span class="text-[16px] font-semibold tracking-tight text-slate-900">ЭкоСкан</span>
-            <span class="px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider rounded-md bg-teal-500/10 text-teal-700 border border-teal-500/20">AI</span>
-          </div>
-          <span class="text-[10px] text-slate-400 font-medium -mt-0.5">food analysis & safety</span>
-        </div>
-
-        <button onclick="triggerHaptic('notification', 'success')" class="relative w-9 h-9 rounded-xl bg-white border border-white shadow-[0_6px_16px_rgba(15,23,42,0.06)] flex items-center justify-center text-slate-700 pressable">
-          <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-          </svg>
-          <span class="absolute top-2 right-2.5 w-1.5 h-1.5 rounded-full bg-orange-500"></span>
-        </button>
-      </div>
     </header>
 
-    <!-- Основной скроллируемый контент -->
-    <main id="main-scroll" class="flex-1 overflow-y-auto no-scrollbar px-4 pb-28">
-
-      <!-- ВКЛАДКА 1: ОБЗОР -->
-      <div id="tab-overview" class="space-y-4 pt-1">
-        <div class="space-y-2.5">
-          <div class="flex items-center justify-between px-1">
-            <button onclick="cyclePeriod()" class="flex items-center gap-1.5 text-[13px] font-medium text-slate-600 pressable">
-              <span id="period-label">Сегодня · 4 продукта</span>
-              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="flex items-center gap-2">
-              <span class="text-[11px] font-medium text-slate-400">Статус:</span>
-              <span class="px-2 py-0.5 rounded-full bg-white/90 text-[11px] font-semibold text-emerald-600 border border-white shadow-sm">Оптимально</span>
-            </div>
-          </div>
-
-          <!-- Белая капсула тренда (референс #2) -->
-          <div class="relative flex items-center justify-between py-1">
-            <div class="flex items-center gap-2 pl-1">
-              <div class="flex flex-col gap-1 items-center"><span class="w-1 h-1 rounded-full bg-slate-300"></span><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span class="w-1 h-1 rounded-full bg-slate-300"></span></div>
-              <div class="flex flex-col gap-1 items-center"><span class="w-1 h-1 rounded-full bg-slate-300"></span><span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span></div>
-              <div class="w-[1.5px] h-4 bg-slate-800/70 rounded-full mx-0.5"></div>
-            </div>
-
-            <div onclick="showToast('Индекс чистоты рационов вырос на +12%')" class="glass-pill rounded-full px-4 py-2 flex items-center gap-2.5 pressable cursor-pointer">
-              <div class="w-6 h-6 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-              </div>
-              <div class="leading-tight">
-                <div class="text-[12px] font-semibold text-slate-800 tracking-tight">Качество рациона</div>
-                <div class="text-[10px] font-medium text-emerald-600">+12% за 7 дней</div>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-2 pr-1">
-              <div class="w-[1.5px] h-4 bg-slate-800/70 rounded-full mx-0.5"></div>
-              <div class="flex flex-col gap-1 items-center"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span></div>
-            </div>
-          </div>
+    <!-- Trend Capsule -->
+    <div class="trend-capsule">
+        <div class="trend-header">
+            <span>Рацион сегодня</span>
+            <span class="trend-status" id="trend-text">Пусто (начните сканирование)</span>
         </div>
-
-        <!-- HERO ВИДЖЕТ -->
-        <section class="mesh-hero rounded-[30px] p-5 text-white relative overflow-hidden border border-white/75">
-          <div class="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-white/25 blur-2xl pointer-events-none"></div>
-
-          <div class="flex items-center justify-between mb-3 relative z-10">
-            <div>
-              <span class="text-[11px] uppercase tracking-wider font-medium text-white/80">Индекс чистоты состава</span>
-              <div class="flex items-center gap-1.5 mt-0.5 text-[12px] text-white/90 font-medium"><span>&lt;</span><span>6 июн — 12 июн</span><span>&gt;</span></div>
-            </div>
-            <div class="glass-badge px-2.5 py-1 rounded-full text-[11px] font-semibold text-white flex items-center gap-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
-              <span>AI Active</span>
-            </div>
-          </div>
-
-          <div class="flex items-end justify-between mt-2 mb-4 relative z-10">
-            <div class="flex items-baseline gap-2">
-              <div id="hero-score-led" class="led-glow"></div>
-              <span class="text-[14px] font-medium text-white/80 mb-1">/ 100 баллов</span>
-            </div>
-            <div class="text-right">
-              <div class="text-[11px] text-white/80">Без Е-добавок</div>
-              <div id="clean-ratio-label" class="text-[13px] font-semibold">4 из 4 прод.</div>
-            </div>
-          </div>
-
-          <button onclick="openScanner()" class="w-full py-3 px-4 rounded-2xl bg-white/90 hover:bg-white text-slate-900 font-semibold text-[13px] shadow-[0_10px_25px_rgba(15,23,42,0.12)] flex items-center justify-center gap-2.5 pressable relative z-10">
-            <div class="w-6 h-6 rounded-lg bg-gradient-to-tr from-teal-500 to-sky-500 text-white flex items-center justify-center">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2M7 12h10"/></svg>
-            </div>
-            <span>Сканировать состав (Камера)</span>
-          </button>
-        </section>
-
-        <!-- BENTO СЕТКА -->
-        <section class="grid grid-cols-2 gap-3">
-          <div onclick="showToast('Сахар за день: 16.2 г')" class="mesh-sugar rounded-[28px] p-4 text-white relative overflow-hidden border border-white/75 flex flex-col justify-between min-h-[154px] pressable cursor-pointer">
-            <span class="text-[12px] font-medium text-white/90">Сахар / День</span>
-            <div class="my-2 flex items-center justify-between gap-1">
-              <div class="flex items-baseline gap-1"><div id="sugar-led" class="led-glow"></div><span class="text-[11px] font-medium text-white/80">г</span></div>
-              <span class="glass-badge px-2 py-0.5 rounded-full text-[10px] font-semibold text-white">↓ 14%</span>
-            </div>
-            <div class="flex items-end justify-between gap-1 h-4 pt-1 opacity-80"><span class="w-1.5 h-2 bg-white/40 rounded-full"></span><span class="w-1.5 h-3.5 bg-white/60 rounded-full"></span><span class="w-1.5 h-4 bg-white rounded-full"></span><span class="w-1.5 h-3 bg-white/70 rounded-full"></span></div>
-          </div>
-
-          <div onclick="showToast('Белок: 78.5 г')" class="mesh-protein rounded-[28px] p-4 text-white relative overflow-hidden border border-white/75 flex flex-col justify-between min-h-[154px] pressable cursor-pointer">
-            <span class="text-[12px] font-medium text-white/90">Белок / Норма</span>
-            <div class="my-2 flex items-baseline gap-1.5"><div id="protein-led" class="led-glow"></div><span class="text-[11px] font-medium text-white/80">г</span></div>
-            <div class="flex items-center justify-between"><span class="glass-badge px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-white">Оптимально</span><span class="text-[10px] text-white/80 font-medium">92%</span></div>
-          </div>
-
-          <div onclick="showToast('Индекс Е-добавок: 0')" class="mesh-additives rounded-[28px] p-4 text-white relative overflow-hidden border border-white/75 flex flex-col justify-between min-h-[158px] pressable cursor-pointer">
-            <div class="flex items-center justify-between"><span class="text-[12px] font-medium text-white/95">Е-добавки</span><span class="w-6 h-6 rounded-lg bg-white/20 backdrop-blur-md border border-white/40 flex items-center justify-center text-[11px]">↗</span></div>
-            <div class="relative my-1 -mx-4 h-14 flex items-center">
-              <svg class="w-full h-full overflow-visible" viewBox="0 0 180 56" fill="none">
-                <line x1="0" y1="28" x2="180" y2="28" stroke="rgba(255,255,255,0.28)" stroke-width="1"/>
-                <path d="M0 28 C 22 6, 44 6, 66 28 C 88 50, 110 50, 132 28 C 154 6, 168 14, 180 28" stroke="rgba(255,255,255,0.75)" stroke-width="1.4" fill="none"/>
-                <circle cx="116" cy="12" r="4" fill="#E4FF3B" /><circle cx="116" cy="12" r="7.5" fill="#E4FF3B" fill-opacity="0.28" />
-              </svg>
-            </div>
-            <div class="flex items-center justify-between"><span class="text-[14px] font-semibold">Чисто</span><span class="text-[10px] text-white/85 font-medium">0 вредных</span></div>
-          </div>
-
-          <div onclick="showToast('Средний Nutri-Score: A+')" class="mesh-nutri rounded-[28px] p-4 text-white relative overflow-hidden border border-white/75 flex flex-col justify-between min-h-[158px] pressable cursor-pointer">
-            <span class="text-[12px] font-medium text-white/95">Нутри-скор</span>
-            <div class="my-1 flex items-baseline justify-between"><div id="nutri-led" class="led-glow"></div><span class="text-[11px] font-medium text-white/90 text-right">Чистый<br/>состав</span></div>
-            <div class="flex items-end justify-between h-4 pt-1 opacity-75"><span class="w-[1.5px] h-2 bg-white/50"></span><span class="w-[1.5px] h-2.5 bg-white/50"></span><span class="w-[2.5px] h-4 bg-white rounded-full shadow-[0_0_6px_#fff]"></span><span class="w-[1.5px] h-2.5 bg-white/50"></span></div>
-          </div>
-        </section>
-
-        <!-- НЕДАВНИЕ ПРОДУКТЫ -->
-        <section class="pt-1">
-          <div class="flex items-center justify-between px-1 mb-2.5">
-            <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Недавно проверенные</h2>
-            <button onclick="switchTab('diary')" class="text-[12px] font-medium text-slate-400">Все →</button>
-          </div>
-          <div id="recent-products-list" class="space-y-2.5"></div>
-        </section>
-      </div>
-
-      <!-- ВКЛАДКА 2: ДНЕВНИК -->
-      <div id="tab-diary" class="hidden space-y-4 pt-2">
-        <div class="glass-card-light rounded-[28px] p-4">
-          <div class="flex items-center justify-between mb-3">
-            <div>
-              <h2 class="text-[16px] font-semibold text-slate-900">Дневник питания</h2>
-              <p class="text-[12px] text-slate-500">Суммарный рацион за день</p>
-            </div>
-            <span id="diary-count-badge" class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 text-[12px] font-semibold">4 шт.</span>
-          </div>
-          <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-200/60 text-center">
-            <div class="bg-white/70 rounded-2xl p-2.5"><div class="text-[10px] text-slate-400">Калории</div><div id="diary-kcal" class="text-[15px] font-bold text-slate-800 mt-0.5">640 ккал</div></div>
-            <div class="bg-white/70 rounded-2xl p-2.5"><div class="text-[10px] text-slate-400">Белки</div><div id="diary-prot" class="text-[15px] font-bold text-indigo-600 mt-0.5">78.5 г</div></div>
-            <div class="bg-white/70 rounded-2xl p-2.5"><div class="text-[10px] text-slate-400">Сахар</div><div id="diary-sugar" class="text-[15px] font-bold text-pink-600 mt-0.5">16.2 г</div></div>
-          </div>
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progress-fill"></div>
         </div>
-        <div id="diary-products-list" class="space-y-2.5"></div>
-      </div>
+    </div>
 
-      <!-- ВКЛАДКА 3: ПРОФИЛЬ И АЛЛЕРГЕНЫ -->
-      <div id="tab-profile" class="hidden space-y-4 pt-2">
-        <div class="mesh-hero rounded-[30px] p-5 text-white relative overflow-hidden border border-white/75">
-          <div class="flex items-center gap-3.5">
-            <div id="user-avatar-initials" class="w-14 h-14 rounded-2xl bg-white/25 backdrop-blur-md border border-white/60 flex items-center justify-center text-2xl font-bold shadow-inner">TG</div>
-            <div>
-              <div id="user-display-name" class="text-[17px] font-semibold">Telegram User</div>
-              <div id="user-username-tag" class="text-[12px] text-white/85">@ecoscan_user · Pro</div>
-              <div class="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full glass-badge text-[10px] font-semibold">Серия без сахара: 9 дней</div>
-            </div>
-          </div>
+    <!-- Bento Grid (Start from 0) -->
+    <div class="bento-grid">
+        <div class="bento-card mesh-pink">
+            <div class="bento-label">Индекс чистоты</div>
+            <div class="bento-value" id="val-purity">0%</div>
         </div>
-
-        <div class="glass-card-light rounded-[26px] p-4 space-y-3">
-          <h3 class="text-[14px] font-semibold text-slate-800">Персональные фильтры состава</h3>
-          <p class="text-[11px] text-slate-500 -mt-2">AI автоматически подсвечивает эти компоненты</p>
-          <div class="space-y-2.5 pt-1">
-            <label class="flex items-center justify-between p-2.5 rounded-2xl bg-white/75 border border-white"><span class="text-[13px] font-medium text-slate-700">Скрытый сахар и сиропы</span><input type="checkbox" checked class="accent-teal-600 w-4 h-4 rounded"></label>
-            <label class="flex items-center justify-between p-2.5 rounded-2xl bg-white/75 border border-white"><span class="text-[13px] font-medium text-slate-700">Пальмовое масло</span><input type="checkbox" checked class="accent-teal-600 w-4 h-4 rounded"></label>
-            <label class="flex items-center justify-between p-2.5 rounded-2xl bg-white/75 border border-white"><span class="text-[13px] font-medium text-slate-700">Е-добавки и красители</span><input type="checkbox" checked class="accent-teal-600 w-4 h-4 rounded"></label>
-          </div>
+        <div class="bento-card mesh-orange">
+            <div class="bento-label">Сахар</div>
+            <div class="bento-value" id="val-sugar">0 г</div>
         </div>
-      </div>
+        <div class="bento-card mesh-green">
+            <div class="bento-label">Белок</div>
+            <div class="bento-value" id="val-protein">0 г</div>
+        </div>
+        <div class="bento-card mesh-orange">
+            <div class="bento-label">Е-добавки</div>
+            <div class="bento-value" id="val-e">0</div>
+        </div>
+    </div>
 
-    </main>
+    <!-- Scanner Trigger -->
+    <div class="scanner-card" onclick="openCameraScanner()">
+        <div class="scanner-info">
+            <h3>Сканировать продукт</h3>
+            <p>Наведите камеру на этикетку состава</p>
+        </div>
+        <div class="scanner-icon-btn">📷</div>
+    </div>
 
-    <!-- НИЖНЯЯ НАВИГАЦИЯ -->
-    <nav class="absolute bottom-4 left-4 right-4 z-30">
-      <div class="glass-pill rounded-[26px] px-3 py-2 flex items-center justify-around shadow-[0_14px_34px_rgba(15,23,42,0.12)]">
-        <button onclick="switchTab('overview')" id="nav-overview" class="nav-btn flex flex-col items-center gap-1 py-1 px-3 rounded-2xl text-slate-900 font-semibold transition-all">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z"/></svg>
-          <span class="text-[10px]">Обзор</span>
-        </button>
+    <!-- Diary Feed -->
+    <div class="diary-section">
+        <div class="diary-title">Дневник питания</div>
+        <div id="diary-list" class="diary-empty">Список продуктов пуст. Отсканируйте первую этикетку!</div>
+    </div>
 
-        <button onclick="openScanner()" class="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-900 text-white shadow-[0_8px_20px_rgba(15,23,42,0.25)] pressable">
-          <svg class="w-4 h-4 text-teal-300" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2M7 12h10"/></svg>
-          <span class="text-[12px] font-semibold">Сканер</span>
-        </button>
-
-        <button onclick="switchTab('diary')" id="nav-diary" class="nav-btn flex flex-col items-center gap-1 py-1 px-3 rounded-2xl text-slate-400 font-medium transition-all">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-          <span class="text-[10px]">Дневник</span>
-        </button>
-
-        <button onclick="switchTab('profile')" id="nav-profile" class="nav-btn flex flex-col items-center gap-1 py-1 px-3 rounded-2xl text-slate-400 font-medium transition-all">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-          <span class="text-[10px]">Профиль</span>
-        </button>
-      </div>
+    <!-- Bottom Nav -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('home')">
+            <span>🏠</span>Главная
+        </div>
+        <div class="nav-item" onclick="openCameraScanner()">
+            <span>📷</span>Сканер
+        </div>
+        <div class="nav-item" onclick="switchTab('diary')">
+            <span>📖</span>Дневник
+        </div>
     </nav>
 
-    <!-- МОДАЛЬНОЕ ОКНО СКАНИРОВАНИЯ -->
-    <div id="scanner-modal" class="hidden absolute inset-0 z-50 bg-slate-950/90 backdrop-blur-xl text-white flex flex-col justify-between p-5">
-      <div class="flex items-center justify-between pt-4">
-        <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-teal-400 animate-ping"></span><span class="text-[14px] font-semibold">AI Сканер этикеток</span></div>
-        <button onclick="closeScanner()" class="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-white pressable">✕</button>
-      </div>
-
-      <div class="relative my-4 flex-1 max-h-[340px] rounded-[30px] border border-white/25 bg-gradient-to-b from-slate-800/70 to-slate-900/90 overflow-hidden flex flex-col items-center justify-center p-6">
-        <div class="absolute top-5 left-5 w-7 h-7 border-t-2 border-l-2 border-teal-400 rounded-tl-xl"></div>
-        <div class="absolute top-5 right-5 w-7 h-7 border-t-2 border-r-2 border-teal-400 rounded-tr-xl"></div>
-        <div class="absolute bottom-5 left-5 w-7 h-7 border-b-2 border-l-2 border-teal-400 rounded-bl-xl"></div>
-        <div class="absolute bottom-5 right-5 w-7 h-7 border-b-2 border-r-2 border-teal-400 rounded-br-xl"></div>
-        <div class="scanner-laser absolute left-4 right-4 h-[2px] bg-gradient-to-r from-transparent via-teal-400 to-transparent shadow-[0_0_16px_#2dd4bf]"></div>
-
-        <div class="w-full max-w-[240px] rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 p-4 text-center space-y-2">
-          <div class="text-[11px] uppercase tracking-widest text-teal-300 font-semibold">Наведите камеру на состав</div>
-          <p class="text-[11px] text-white/75 leading-relaxed">Распознавание Е-добавок и скрытого сахара через Telegram WebApp</p>
-          <div id="scanning-spinner" class="hidden pt-2">
-            <span class="inline-block px-3 py-1 rounded-full bg-teal-400/20 text-teal-300 text-[11px] font-semibold animate-pulse">Анализ нейросетью...</span>
-          </div>
+    <!-- Camera View Modal -->
+    <div id="camera-modal">
+        <div style="color: #fff; text-align: center; font-weight: 600; padding-top: 10px;">Наведите на этикетку состава</div>
+        <video id="camera-feed" autoplay playsinline></video>
+        <div class="camera-controls">
+            <button class="btn-close-cam" onclick="closeCameraScanner()">Закрыть</button>
+            <button class="btn-capture" onclick="captureProduct()"></button>
+            <div style="width: 70px;"></div>
         </div>
-      </div>
-
-      <div class="space-y-2.5 pb-4">
-        <div class="text-[12px] text-white/70 text-center font-medium">Выберите тестовый продукт:</div>
-        <div class="grid grid-cols-1 gap-2">
-          <button onclick="simulateScan('bar')" class="w-full p-3 rounded-2xl bg-white/12 hover:bg-white/20 border border-white/20 flex items-center justify-between text-left pressable">
-            <div><div class="text-[13px] font-semibold">Протеиновый батончик Raw</div><div class="text-[11px] text-white/65">Изолят гороха, какао-масло</div></div>
-            <span class="px-2.5 py-1 rounded-full bg-emerald-400/20 text-emerald-300 text-[11px] font-bold">91/100</span>
-          </button>
-          <button onclick="simulateScan('soda')" class="w-full p-3 rounded-2xl bg-white/12 hover:bg-white/20 border border-white/20 flex items-center justify-between text-left pressable">
-            <div><div class="text-[13px] font-semibold">Газировка «Ягодный микс Zero»</div><div class="text-[11px] text-white/65">Аспартам, E950, E129</div></div>
-            <span class="px-2.5 py-1 rounded-full bg-rose-400/20 text-rose-300 text-[11px] font-bold">34/100</span>
-          </button>
-        </div>
-      </div>
     </div>
 
-    <!-- ШТОРКА РАЗБОРА ПРОДУКТА -->
-    <div id="product-sheet-backdrop" onclick="closeProductSheet()" class="hidden sheet-backdrop opacity-0 absolute inset-0 z-40 bg-slate-900/40 backdrop-blur-xs"></div>
-    <div id="product-sheet" class="sheet-panel translate-y-full absolute bottom-0 left-0 right-0 z-50 bg-[#F6F7F9] rounded-t-[34px] max-h-[88%] flex flex-col shadow-[0_-20px_50px_rgba(15,23,42,0.2)] border-t border-white">
-      <div class="w-10 h-1.5 bg-slate-300 rounded-full mx-auto mt-3 mb-2"></div>
-      <div id="product-sheet-content" class="overflow-y-auto no-scrollbar px-5 pb-7 space-y-4"></div>
-    </div>
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
 
-    <!-- TOAST -->
-    <div id="toast" class="pointer-events-none opacity-0 transition-all duration-300 absolute top-20 left-1/2 -translate-x-1/2 z-50 glass-pill px-4 py-2 rounded-full text-[12px] font-semibold text-slate-800 whitespace-nowrap shadow-lg">Готово</div>
-  </div>
-
-  <script>
-    // --- ИНТЕГРАЦИЯ С TELEGRAM WEBAPP SDK ---
-    let tg = window.Telegram?.WebApp;
-
-    function initTelegramSDK() {
-      if (tg && tg.initData) {
-        tg.ready();
-        tg.expand(); // Разворачиваем мини-апп на весь экран Telegram
-        
-        // Получаем данные пользователя из Telegram
-        const user = tg.initDataUnsafe?.user;
-        if (user) {
-          const name = user.first_name || 'друг';
-          const username = user.username ? '@' + user.username : 'Telegram User';
-          document.getElementById('user-display-name').textContent = name;
-          document.getElementById('user-username-tag').textContent = username;
-          document.getElementById('tg-username').textContent = name;
-          
-          const initials = (user.first_name?.[0] || 'T') + (user.last_name?.[0] || '');
-          document.getElementById('user-avatar-initials').textContent = initials.toUpperCase();
+        // Set user name if available from Telegram
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            const firstName = tg.initDataUnsafe.user.first_name || "Макс";
+            document.getElementById('user-name').innerText = firstName;
+            document.getElementById('user-initial').innerText = firstName.charAt(0).toUpperCase();
         }
-        
-        document.getElementById('tg-status-text').textContent = 'Telegram SDK Connected';
-      }
-    }
 
-    // Тактильный отклик через Telegram SDK
-    function triggerHaptic(type = 'impact', style = 'medium') {
-      if (tg && tg.HapticFeedback) {
-        if (type === 'impact') {
-          tg.HapticFeedback.impactOccurred(style);
-        } else if (type === 'notification') {
-          tg.HapticFeedback.notificationOccurred(style);
-        } else if (type === 'selection') {
-          tg.HapticFeedback.selectionChanged();
-        }
-      }
-    }
+        let mediaStream = null;
 
-    function closeApp() {
-      if (tg) {
-        tg.close();
-      } else {
-        showToast('Приложение свернуто');
-      }
-    }
-
-    // Добавление кнопки в Telegram Header (MainButton)
-    function setupTelegramMainButton(actionText, callback) {
-      if (tg && tg.MainButton) {
-        tg.MainButton.setText(actionText);
-        tg.MainButton.color = '#14171F';
-        tg.MainButton.textColor = '#FFFFFF';
-        tg.MainButton.onClick(callback);
-        tg.MainButton.show();
-      }
-    }
-
-    function hideTelegramMainButton() {
-      if (tg && tg.MainButton) {
-        tg.MainButton.hide();
-      }
-    }
-
-    // --- DOT MATRIX РЕНДЕРЕР (RonDesignLab стиль) ---
-    const DOT_GLYPHS = {
-      '0': ['01110','10001','10011','10101','11001','10001','01110'],
-      '1': ['00100','01100','00100','00100','00100','00100','01110'],
-      '2': ['01110','10001','00001','00110','01000','10000','11111'],
-      '3': ['11110','00001','00001','01110','00001','00001','11110'],
-      '4': ['00010','00110','01010','10010','11111','00010','00010'],
-      '5': ['11111','10000','11110','00001','00001','10001','01110'],
-      '6': ['01110','10000','11110','10001','10001','10001','01110'],
-      '7': ['11111','00001','00010','00100','01000','01000','01000'],
-      '8': ['01110','10001','10001','01110','10001','10001','01110'],
-      '9': ['01110','10001','10001','01111','00001','00001','01110'],
-      '.': ['00000','00000','00000','00000','00000','01100','01100'],
-      'A': ['01110','10001','10001','11111','10001','10001','10001'],
-      'B': ['11110','10001','10001','11110','10001','10001','11110'],
-      'C': ['01111','10000','10000','10000','10000','10000','01111'],
-      '+': ['00000','00100','00100','11111','00100','00100','00000']
-    };
-
-    function renderDotMatrix(text, dotRadius = 2.0, gap = 5.2, color = '#FFFFFF') {
-      const chars = String(text).split('');
-      const charSpacing = 5 * gap + 4;
-      const totalWidth = chars.length * charSpacing - 4;
-      const totalHeight = 7 * gap;
-      let circles = '';
-      chars.forEach((ch, idx) => {
-        const glyph = DOT_GLYPHS[ch] || DOT_GLYPHS['0'];
-        const offsetX = idx * charSpacing;
-        for (let r = 0; r < 7; r++) {
-          for (let c = 0; c < 5; c++) {
-            if (glyph[r][c] === '1') {
-              circles += `<circle cx="${offsetX + c * gap + dotRadius}" cy="${r * gap + dotRadius}" r="${dotRadius}" fill="${color}" />`;
+        async function openCameraScanner() {
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('medium');
             }
-          }
+            const modal = document.getElementById('camera-modal');
+            modal.style.display = 'flex';
+            
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                document.getElementById('camera-feed').srcObject = mediaStream;
+            } catch (err) {
+                alert('Не удалось получить доступ к камере. Убедитесь, что разрешили её в настройках браузера.');
+                closeCameraScanner();
+            }
         }
-      });
-      return `<svg width="${totalWidth}" height="${totalHeight}" viewBox="0 0 ${totalWidth} ${totalHeight}" fill="none">${circles}</svg>`;
-    }
 
-    const PRODUCTS_DB = {
-      yogurt: { id: 'yogurt', name: 'Йогурт греческий без сахара', brand: 'BioFarm · 140 г', score: 94, nutri: 'A+', meshClass: 'mesh-nutri', kcal: 92, protein: 11.2, sugar: 3.8, glycemic: 'Низкий (ГИ 15)', summary: 'Идеальный белковый продукт без сахара и стабилизаторов.', ingredients: [{ name: 'Молоко нормализованное', status: 'green', note: 'Натуральный белок' }, { name: 'Закваска пробиотическая', status: 'green', note: 'Полезно для микробиома' }] },
-      bar: { id: 'bar', name: 'Батончик протеиновый Raw', brand: 'PureBite · 50 г', score: 91, nutri: 'A+', meshClass: 'mesh-hero', kcal: 185, protein: 16.0, sugar: 6.4, glycemic: 'Умеренный (ГИ 38)', summary: 'Чистый состав на основе растительного белка и фиников.', ingredients: [{ name: 'Изолят горохового белка', status: 'green', note: 'Чистый аминопрофиль' }, { name: 'Финиковая паста', status: 'yellow', note: 'Натуральный фруктовый сахар' }] },
-      pesto: { id: 'pesto', name: 'Соус песто классический', brand: 'Verde Italia · 90 г', score: 82, nutri: 'A', meshClass: 'mesh-protein', kcal: 245, protein: 4.5, sugar: 1.8, glycemic: 'Низкий (ГИ 12)', summary: 'Свежий базилик и оливковое масло Extra Virgin.', ingredients: [{ name: 'Базилик свежий', status: 'green', note: 'Антиоксиданты' }, { name: 'Масло оливковое', status: 'green', note: 'Омега-9' }] },
-      oat: { id: 'oat', name: 'Напиток овсяный Barista', brand: 'OatLab · 250 мл', score: 79, nutri: 'A', meshClass: 'mesh-additives', kcal: 118, protein: 2.8, sugar: 4.2, glycemic: 'Средний (ГИ 45)', summary: 'Без добавленного сахара, обогащен кальцием.', ingredients: [{ name: 'Овсяная крупа', status: 'green', note: 'Бета-глюканы' }] },
-      soda: { id: 'soda', name: 'Газировка «Ягодный микс Zero»', brand: 'Sparkle · 330 мл', score: 34, nutri: 'C', meshClass: 'mesh-sugar', kcal: 4, protein: 0.0, sugar: 0.2, glycemic: 'ГИ 0', summary: 'Содержит синтетические подсластители и красители.', ingredients: [{ name: 'Аспартам и E950', status: 'red', note: 'Искусственные подсластители' }, { name: 'Краситель E129', status: 'red', note: 'Синтетический краситель' }] }
-    };
-
-    let state = { diaryIds: ['yogurt', 'bar', 'pesto', 'oat'], periodIndex: 0 };
-
-    function updateDashboard() {
-      const items = state.diaryIds.map(id => PRODUCTS_DB[id]);
-      const count = items.length;
-      const avgScore = Math.round(items.reduce((acc, p) => acc + p.score, 0) / count);
-      const totalSugar = items.reduce((acc, p) => acc + p.sugar, 0).toFixed(1);
-      const totalProtein = items.reduce((acc, p) => acc + p.protein, 0).toFixed(1);
-      const totalKcal = Math.round(items.reduce((acc, p) => acc + p.kcal, 0));
-      const cleanCount = items.filter(p => p.score >= 75).length;
-
-      document.getElementById('hero-score-led').innerHTML = renderDotMatrix(String(avgScore), 2.5, 6.2, '#FFFFFF');
-      document.getElementById('sugar-led').innerHTML = renderDotMatrix(String(totalSugar), 1.9, 4.6, '#FFFFFF');
-      document.getElementById('protein-led').innerHTML = renderDotMatrix(String(totalProtein), 1.9, 4.6, '#FFFFFF');
-      document.getElementById('nutri-led').innerHTML = renderDotMatrix(avgScore >= 85 ? 'A+' : 'A', 2.3, 5.6, '#FFFFFF');
-
-      document.getElementById('clean-ratio-label').textContent = `${cleanCount} из ${count} прод.`;
-      document.getElementById('diary-count-badge').textContent = `${count} шт.`;
-      document.getElementById('diary-kcal').textContent = `${totalKcal} ккал`;
-      document.getElementById('diary-prot').textContent = `${totalProtein} г`;
-      document.getElementById('diary-sugar').textContent = `${totalSugar} г`;
-
-      renderProductLists();
-    }
-
-    function renderProductLists() {
-      const html = [...new Set(state.diaryIds)].reverse().map(id => {
-        const p = PRODUCTS_DB[id];
-        return `
-          <div onclick="openProductDetail('${p.id}')" class="glass-card-light rounded-[22px] p-3.5 flex items-center justify-between pressable cursor-pointer">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="w-11 h-11 rounded-2xl ${p.meshClass} flex items-center justify-center text-white font-bold text-[13px] shrink-0 border border-white/70 shadow-sm">${p.score}</div>
-              <div class="truncate"><div class="text-[13px] font-semibold text-slate-800 truncate">${p.name}</div><div class="text-[11px] text-slate-400 font-medium mt-0.5">${p.brand} · ${p.kcal} ккал</div></div>
-            </div>
-            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border bg-emerald-500/12 text-emerald-700 border-emerald-500/20">${p.nutri}</span>
-          </div>
-        `;
-      }).join('');
-      document.getElementById('recent-products-list').innerHTML = html;
-      document.getElementById('diary-products-list').innerHTML = html;
-    }
-
-    function openProductDetail(productId) {
-      triggerHaptic('selection');
-      const p = PRODUCTS_DB[productId];
-      const ledHtml = renderDotMatrix(String(p.score), 2.4, 5.8, '#FFFFFF');
-
-      const ingredientsHtml = p.ingredients.map(ing => `
-        <div class="p-3 rounded-2xl bg-white/85 border border-white flex items-start gap-3">
-          <span class="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${ing.status === 'green' ? 'bg-emerald-500' : (ing.status === 'yellow' ? 'bg-amber-400' : 'bg-rose-500')}"></span>
-          <div class="flex-1"><div class="flex items-center justify-between"><span class="text-[12.5px] font-semibold text-slate-800">${ing.name}</span><span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold ${ing.status === 'green' ? 'text-emerald-700 bg-emerald-50' : 'text-rose-700 bg-rose-50'}">${ing.status === 'green' ? 'Безопасно' : 'Внимание'}</span></div><p class="text-[11px] text-slate-500 mt-0.5">${ing.note}</p></div>
-        </div>
-      `).join('');
-
-      document.getElementById('product-sheet-content').innerHTML = `
-        <div class="${p.meshClass} rounded-[28px] p-5 text-white relative overflow-hidden border border-white/75">
-          <div class="flex items-start justify-between">
-            <div><span class="glass-badge px-2.5 py-0.5 rounded-full text-[10px] font-semibold">Нутри-скор ${p.nutri}</span><h3 class="text-[18px] font-bold mt-2 leading-tight">${p.name}</h3><p class="text-[12px] text-white/85 mt-0.5">${p.brand}</p></div>
-            <button onclick="closeProductSheet()" class="w-8 h-8 rounded-full bg-white/25 flex items-center justify-center text-white text-sm">✕</button>
-          </div>
-          <div class="mt-4 pt-3 border-t border-white/25 flex items-end justify-between">
-            <div><div class="text-[10px] uppercase text-white/80 mb-1">Безопасность</div><div class="flex items-baseline gap-2"><div class="led-glow">${ledHtml}</div><span class="text-[12px] text-white/85">/ 100</span></div></div>
-            <div class="text-right"><div class="text-[10px] text-white/80">Гликемия</div><div class="text-[12px] font-semibold mt-0.5">${p.glycemic}</div></div>
-          </div>
-        </div>
-        <p class="text-[12.5px] text-slate-600 leading-relaxed px-1">${p.summary}</p>
-        <div class="grid grid-cols-3 gap-2 text-center">
-          <div class="glass-card-light rounded-2xl p-2.5"><div class="text-[10px] text-slate-400">Ккал</div><div class="text-[14px] font-bold text-slate-800 mt-0.5">${p.kcal}</div></div>
-          <div class="glass-card-light rounded-2xl p-2.5"><div class="text-[10px] text-slate-400">Белки</div><div class="text-[14px] font-bold text-indigo-600 mt-0.5">${p.protein}г</div></div>
-          <div class="glass-card-light rounded-2xl p-2.5"><div class="text-[10px] text-slate-400">Сахар</div><div class="text-[14px] font-bold text-pink-600 mt-0.5">${p.sugar}г</div></div>
-        </div>
-        <div class="space-y-2"><div class="text-[13px] font-semibold text-slate-800 px-1">Состав</div>${ingredientsHtml}</div>
-        <button onclick="addProductToDiary('${p.id}')" class="w-full py-3.5 rounded-2xl bg-slate-900 text-white font-semibold text-[13.5px] shadow-lg pressable">+ Добавить в дневник</button>
-      `;
-
-      document.getElementById('product-sheet-backdrop').classList.remove('hidden');
-      setTimeout(() => {
-        document.getElementById('product-sheet-backdrop').classList.remove('opacity-0');
-        document.getElementById('product-sheet').classList.remove('translate-y-full');
-      }, 10);
-
-      // Интеграция с Telegram MainButton
-      setupTelegramMainButton(`Добавить в рацион (${p.name})`, () => {
-        addProductToDiary(p.id);
-      });
-    }
-
-    function closeProductSheet() {
-      document.getElementById('product-sheet-backdrop').classList.add('opacity-0');
-      document.getElementById('product-sheet').classList.add('translate-y-full');
-      setTimeout(() => document.getElementById('product-sheet-backdrop').classList.add('hidden'), 300);
-      hideTelegramMainButton();
-    }
-
-    function addProductToDiary(productId) {
-      state.diaryIds.push(productId);
-      updateDashboard();
-      closeProductSheet();
-      triggerHaptic('notification', 'success');
-      showToast(`Добавлено: ${PRODUCTS_DB[productId].name}`);
-    }
-
-    function openScanner() {
-      triggerHaptic('impact', 'light');
-      document.getElementById('scanning-spinner').classList.add('hidden');
-      document.getElementById('scanner-modal').classList.remove('hidden');
-    }
-
-    function closeScanner() {
-      document.getElementById('scanner-modal').classList.add('hidden');
-    }
-
-    function simulateScan(productId) {
-      triggerHaptic('impact', 'medium');
-      document.getElementById('scanning-spinner').classList.remove('hidden');
-      setTimeout(() => {
-        closeScanner();
-        openProductDetail(productId);
-      }, 600);
-    }
-
-    function switchTab(tabName) {
-      triggerHaptic('selection');
-      ['overview', 'diary', 'profile'].forEach(t => document.getElementById(`tab-${t}`).classList.add('hidden'));
-      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-
-      ['overview', 'diary', 'profile'].forEach(t => {
-        const btn = document.getElementById(`nav-${t}`);
-        if (btn) {
-          btn.classList.toggle('text-slate-900', t === tabName);
-          btn.classList.toggle('font-semibold', t === tabName);
-          btn.classList.toggle('text-slate-400', t !== tabName);
+        function closeCameraScanner() {
+            const modal = document.getElementById('camera-modal');
+            modal.style.display = 'none';
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
         }
-      });
-      document.getElementById('main-scroll').scrollTop = 0;
-    }
 
-    function cyclePeriod() {
-      triggerHaptic('selection');
-      const periods = ['Сегодня · 4 прод.', 'Неделя · 28 прод.', 'Месяц · 116 прод.'];
-      state.periodIndex = (state.periodIndex + 1) % periods.length;
-      document.getElementById('period-label').textContent = periods[state.periodIndex];
-    }
+        function captureProduct() {
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+            closeCameraScanner();
 
-    let toastTimer;
-    function showToast(msg) {
-      const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.classList.remove('opacity-0');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => el.classList.add('opacity-0'), 2200);
-    }
+            // Simulate AI parsing result for the scanned product
+            document.getElementById('trend-text').innerText = 'Отличный рацион';
+            document.getElementById('progress-fill').style.width = '85%';
+            document.getElementById('val-purity').innerText = '92%';
+            document.getElementById('val-sugar').innerText = '3.5 г';
+            document.getElementById('val-protein').innerText = '14.2 г';
+            document.getElementById('val-e').innerText = '0';
 
-    window.addEventListener('DOMContentLoaded', () => {
-      initTelegramSDK();
-      updateDashboard();
-    });
-  </script>
+            const diaryList = document.getElementById('diary-list');
+            diaryList.className = '';
+            diaryList.innerHTML = `
+                <div class="diary-item">
+                    <span>Греческий йогурт натуральный</span>
+                    <strong style="color: #34C759;">Чистый состав (92%)</strong>
+                </div>
+            `;
+        }
+
+        function switchTab(tab) {
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.selectionChanged();
+            }
+            if(tab === 'diary') {
+                alert('Здесь отображается история всех отсканированных продуктов за сегодня.');
+            }
+        }
+    </script>
 </body>
 </html>
