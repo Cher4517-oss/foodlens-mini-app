@@ -8,7 +8,7 @@
     <style>
         :root {
             --bg-color: #F6F7F9;
-            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-bg: rgba(255, 255, 255, 0.9);
             --text-main: #1C1C1E;
             --text-secondary: #8E8E93;
             --accent-green: #34C759;
@@ -29,7 +29,7 @@
             background-color: var(--bg-color);
             color: var(--text-main);
             padding: 16px;
-            padding-bottom: 90px;
+            padding-bottom: 100px;
             max-width: 480px;
             margin: 0 auto;
         }
@@ -71,7 +71,15 @@
             font-weight: 700;
         }
 
-        /* Capsule Trend */
+        /* Screens */
+        .screen {
+            display: none;
+        }
+        .screen.active {
+            display: block;
+        }
+
+        /* Trend Capsule */
         .trend-capsule {
             background: var(--card-bg);
             backdrop-filter: blur(20px);
@@ -130,12 +138,6 @@
             justify-content: space-between;
             min-height: 120px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .bento-card.full-width {
-            grid-column: span 2;
         }
 
         .bento-label {
@@ -152,7 +154,6 @@
             margin-top: 8px;
         }
 
-        /* Mesh Gradients */
         .mesh-green { background: linear-gradient(135deg, rgba(52, 199, 89, 0.15), rgba(0, 122, 255, 0.05)); }
         .mesh-orange { background: linear-gradient(135deg, rgba(255, 149, 0, 0.15), rgba(255, 45, 85, 0.05)); }
         .mesh-pink { background: linear-gradient(135deg, rgba(255, 45, 85, 0.15), rgba(175, 82, 222, 0.05)); }
@@ -206,7 +207,7 @@
 
         #camera-feed {
             width: 100%;
-            height: 70vh;
+            height: 65vh;
             object-fit: cover;
             border-radius: 24px;
         }
@@ -218,10 +219,13 @@
         }
 
         .btn-capture {
-            width: 70px; height: 70px;
-            background: #fff;
-            border-radius: 50%;
-            border: 4px solid rgba(255,255,255,0.4);
+            padding: 14px 28px;
+            background: #34C759;
+            color: #fff;
+            border-radius: 16px;
+            border: none;
+            font-weight: 600;
+            font-size: 15px;
             cursor: pointer;
         }
 
@@ -229,9 +233,50 @@
             background: rgba(255,255,255,0.2);
             color: #fff;
             border: none;
-            padding: 12px 24px;
+            padding: 12px 20px;
             border-radius: 14px;
             font-weight: 600;
+        }
+
+        /* Diary Section */
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .diary-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .diary-info h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .diary-info p {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .diary-badge {
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 40px 20px;
+            font-size: 14px;
         }
 
         /* Bottom Nav */
@@ -240,7 +285,7 @@
             bottom: 16px;
             left: 16px;
             right: 16px;
-            background: rgba(28, 28, 30, 0.9);
+            background: rgba(28, 28, 30, 0.92);
             backdrop-filter: blur(20px);
             border-radius: 24px;
             padding: 10px 20px;
@@ -250,6 +295,7 @@
             max-width: 448px;
             margin: 0 auto;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 100;
         }
 
         .nav-item {
@@ -271,36 +317,6 @@
         .nav-item span {
             font-size: 18px;
         }
-
-        /* Diary log list */
-        .diary-section {
-            background: var(--card-bg);
-            border-radius: 24px;
-            padding: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-        }
-
-        .diary-title {
-            font-size: 15px;
-            font-weight: 600;
-            margin-bottom: 12px;
-        }
-
-        .diary-empty {
-            font-size: 13px;
-            color: var(--text-secondary);
-            text-align: center;
-            padding: 20px 0;
-        }
-
-        .diary-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(0,0,0,0.04);
-            font-size: 13px;
-        }
     </style>
 </head>
 <body>
@@ -313,73 +329,77 @@
         </div>
     </header>
 
-    <!-- Trend Capsule -->
-    <div class="trend-capsule">
-        <div class="trend-header">
-            <span>Рацион сегодня</span>
-            <span class="trend-status" id="trend-text">Пусто (начните сканирование)</span>
+    <!-- TAB 1: HOME -->
+    <div id="tab-home" class="screen active">
+        <!-- Trend Capsule -->
+        <div class="trend-capsule">
+            <div class="trend-header">
+                <span>Рацион сегодня</span>
+                <span class="trend-status" id="trend-text">Пусто (начните сканирование)</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
         </div>
-        <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="progress-fill"></div>
+
+        <!-- Bento Grid -->
+        <div class="bento-grid">
+            <div class="bento-card mesh-pink">
+                <div class="bento-label">Индекс чистоты</div>
+                <div class="bento-value" id="val-purity">0%</div>
+            </div>
+            <div class="bento-card mesh-orange">
+                <div class="bento-label">Сахар</div>
+                <div class="bento-value" id="val-sugar">0 г</div>
+            </div>
+            <div class="bento-card mesh-green">
+                <div class="bento-label">Белок</div>
+                <div class="bento-value" id="val-protein">0 г</div>
+            </div>
+            <div class="bento-card mesh-orange">
+                <div class="bento-label">Е-добавки</div>
+                <div class="bento-value" id="val-e">0</div>
+            </div>
+        </div>
+
+        <!-- Scanner Trigger -->
+        <div class="scanner-card" onclick="openCameraScanner()">
+            <div class="scanner-info">
+                <h3>Сканировать продукт</h3>
+                <p>Запрос в базу данных по штрихкоду / этикетке</p>
+            </div>
+            <div class="scanner-icon-btn">📷</div>
         </div>
     </div>
 
-    <!-- Bento Grid (Start from 0) -->
-    <div class="bento-grid">
-        <div class="bento-card mesh-pink">
-            <div class="bento-label">Индекс чистоты</div>
-            <div class="bento-value" id="val-purity">0%</div>
+    <!-- TAB 2: DIARY -->
+    <div id="tab-diary" class="screen">
+        <div class="section-title">Дневник питания</div>
+        <div id="diary-container">
+            <!-- Items injected via JS -->
         </div>
-        <div class="bento-card mesh-orange">
-            <div class="bento-label">Сахар</div>
-            <div class="bento-value" id="val-sugar">0 г</div>
-        </div>
-        <div class="bento-card mesh-green">
-            <div class="bento-label">Белок</div>
-            <div class="bento-value" id="val-protein">0 г</div>
-        </div>
-        <div class="bento-card mesh-orange">
-            <div class="bento-label">Е-добавки</div>
-            <div class="bento-value" id="val-e">0</div>
-        </div>
-    </div>
-
-    <!-- Scanner Trigger -->
-    <div class="scanner-card" onclick="openCameraScanner()">
-        <div class="scanner-info">
-            <h3>Сканировать продукт</h3>
-            <p>Наведите камеру на этикетку состава</p>
-        </div>
-        <div class="scanner-icon-btn">📷</div>
-    </div>
-
-    <!-- Diary Feed -->
-    <div class="diary-section">
-        <div class="diary-title">Дневник питания</div>
-        <div id="diary-list" class="diary-empty">Список продуктов пуст. Отсканируйте первую этикетку!</div>
     </div>
 
     <!-- Bottom Nav -->
     <nav class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('home')">
+        <div class="nav-item active" id="nav-home" onclick="switchTab('home')">
             <span>🏠</span>Главная
         </div>
         <div class="nav-item" onclick="openCameraScanner()">
             <span>📷</span>Сканер
         </div>
-        <div class="nav-item" onclick="switchTab('diary')">
+        <div class="nav-item" id="nav-diary" onclick="switchTab('diary')">
             <span>📖</span>Дневник
         </div>
     </nav>
 
     <!-- Camera View Modal -->
     <div id="camera-modal">
-        <div style="color: #fff; text-align: center; font-weight: 600; padding-top: 10px;">Наведите на этикетку состава</div>
+        <div style="color: #fff; text-align: center; font-weight: 600; padding-top: 10px;">Поместите штрихкод в кадр</div>
         <video id="camera-feed" autoplay playsinline></video>
         <div class="camera-controls">
             <button class="btn-close-cam" onclick="closeCameraScanner()">Закрыть</button>
-            <button class="btn-capture" onclick="captureProduct()"></button>
-            <div style="width: 70px;"></div>
+            <button class="btn-capture" onclick="simulateScan()">Найти продукт</button>
         </div>
     </div>
 
@@ -387,7 +407,6 @@
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Set user name if available from Telegram
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             const firstName = tg.initDataUnsafe.user.first_name || "Макс";
             document.getElementById('user-name').innerText = firstName;
@@ -395,65 +414,91 @@
         }
 
         let mediaStream = null;
+        let diaryItems = JSON.parse(localStorage.getItem('ecoscans') || '[]');
+
+        function updateUI() {
+            if (diaryItems.length > 0) {
+                let last = diaryItems[diaryItems.length - 1];
+                document.getElementById('trend-text').innerText = 'Рацион проанализирован';
+                document.getElementById('progress-fill').style.width = '85%';
+                document.getElementById('val-purity').innerText = last.purity + '%';
+                document.getElementById('val-sugar').innerText = last.sugar + ' г';
+                document.getElementById('val-protein').innerText = last.protein + ' г';
+                document.getElementById('val-e').innerText = last.eCount;
+            }
+
+            let container = document.getElementById('diary-container');
+            if (diaryItems.length === 0) {
+                container.innerHTML = `<div class="empty-state">Дневник пуст. Отсканируйте первый продукт!</div>`;
+            } else {
+                container.innerHTML = diaryItems.slice().reverse().map(item => `
+                    <div class="diary-card">
+                        <div class="diary-info">
+                            <h4>${item.name}</h4>
+                            <p>${item.time} • Сахар: ${item.sugar}г, Белок: ${item.protein}г</p>
+                        </div>
+                        <div class="diary-badge" style="color: ${item.purity > 80 ? '#34C759' : '#FF9500'}">${item.purity}%</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        updateUI();
+
+        function switchTab(tab) {
+            if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
+            
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+            if (tab === 'home') {
+                document.getElementById('tab-home').classList.add('active');
+                document.getElementById('nav-home').classList.add('active');
+            } else if (tab === 'diary') {
+                document.getElementById('tab-diary').classList.add('active');
+                document.getElementById('nav-diary').classList.add('active');
+                updateUI();
+            }
+        }
 
         async function openCameraScanner() {
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('medium');
-            }
-            const modal = document.getElementById('camera-modal');
-            modal.style.display = 'flex';
-            
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+            document.getElementById('camera-modal').style.display = 'flex';
             try {
-                mediaStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment' } 
-                });
+                mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 document.getElementById('camera-feed').srcObject = mediaStream;
             } catch (err) {
-                alert('Не удалось получить доступ к камере. Убедитесь, что разрешили её в настройках браузера.');
+                alert('Нет доступа к камере.');
                 closeCameraScanner();
             }
         }
 
         function closeCameraScanner() {
-            const modal = document.getElementById('camera-modal');
-            modal.style.display = 'none';
+            document.getElementById('camera-modal').style.display = 'none';
             if (mediaStream) {
-                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream.getTracks().forEach(t => t.stop());
                 mediaStream = null;
             }
         }
 
-        function captureProduct() {
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.notificationOccurred('success');
-            }
+        function simulateScan() {
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             closeCameraScanner();
 
-            // Simulate AI parsing result for the scanned product
-            document.getElementById('trend-text').innerText = 'Отличный рацион';
-            document.getElementById('progress-fill').style.width = '85%';
-            document.getElementById('val-purity').innerText = '92%';
-            document.getElementById('val-sugar').innerText = '3.5 г';
-            document.getElementById('val-protein').innerText = '14.2 г';
-            document.getElementById('val-e').innerText = '0';
+            // Имитируем загрузку из базы данных продуктов по штрихкоду
+            const catalog = [
+                { name: "Органический греческий йогурт 2%", purity: 94, sugar: 3.2, protein: 10.5, eCount: 0 },
+                { name: "Про протеиновый батончик без сахара", purity: 88, sugar: 1.2, protein: 21.0, eCount: 1 },
+                { name: "Авокадо свежее (100г)", purity: 99, sugar: 0.7, protein: 2.0, eCount: 0 }
+            ];
+            const randomProduct = catalog[Math.floor(Math.random() * catalog.length)];
+            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-            const diaryList = document.getElementById('diary-list');
-            diaryList.className = '';
-            diaryList.innerHTML = `
-                <div class="diary-item">
-                    <span>Греческий йогурт натуральный</span>
-                    <strong style="color: #34C759;">Чистый состав (92%)</strong>
-                </div>
-            `;
-        }
+            diaryItems.push({ ...randomProduct, time: timeStr });
+            localStorage.setItem('ecoscans', JSON.stringify(diaryItems));
 
-        function switchTab(tab) {
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.selectionChanged();
-            }
-            if(tab === 'diary') {
-                alert('Здесь отображается история всех отсканированных продуктов за сегодня.');
-            }
+            updateUI();
+            switchTab('home');
         }
     </script>
 </body>
