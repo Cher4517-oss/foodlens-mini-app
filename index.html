@@ -201,6 +201,26 @@
             background: rgba(0,0,0,0.06); color: var(--text-main); font-weight: 600; font-size: 14px; cursor: pointer;
         }
 
+        .purity-cell b { font-size: 18px; }
+        .purity-row { display: flex; align-items: baseline; gap: 8px; margin-top: 2px; }
+        .purity-row .purity-word { display: inline; font-size: 13px; color: var(--text-secondary); }
+        .purity-bar {
+            position: relative; height: 10px; border-radius: 5px; margin: 10px 0 4px;
+            background: linear-gradient(90deg, #FF3B30 0%, #FF9500 50%, #34C759 100%);
+        }
+        .purity-mark {
+            position: absolute; top: 50%; width: 18px; height: 18px; border-radius: 50%;
+            background: #fff; border: 3px solid #1C1C1E; box-sizing: border-box;
+            transform: translate(-50%, -50%);
+        }
+        .photo-row { display: flex; gap: 12px; align-items: center; }
+        .photo-row .result-img { overflow: hidden; }
+        .photo-btns { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .photo-btns button {
+            padding: 11px; border: none; border-radius: 12px; font-weight: 600; font-size: 14px; cursor: pointer;
+            background: rgba(0,0,0,0.06); color: var(--text-main);
+        }
+        .photo-btns .btn-photo-del { color: #FF3B30; }
         .btn-addprod {
             width: 100%; margin-top: 12px; padding: 14px; border: none; border-radius: 12px;
             background: #007AFF; color: #fff; font-weight: 600; font-size: 15px; cursor: pointer;
@@ -286,7 +306,7 @@
 
         <div class="bento-grid">
             <div class="bento-card mesh-pink">
-                <div class="bento-label">Индекс чистоты</div>
+                <div class="bento-label">Полезность продукта</div>
                 <div class="bento-value" id="val-purity">—</div>
             </div>
             <div class="bento-card mesh-orange">
@@ -371,6 +391,16 @@
             <div class="add-title">Новый продукт</div>
             <div class="add-sub" id="add-code"></div>
 
+            <div class="add-field"><label>Фото продукта</label>
+                <div class="photo-row">
+                    <div id="f-photo-preview" class="result-img placeholder">🛒</div>
+                    <div class="photo-btns">
+                        <button type="button" onclick="document.getElementById('f-photo').click()">Добавить фото</button>
+                        <button type="button" id="f-photo-del" class="btn-photo-del" style="display:none" onclick="clearProductPhoto()">Убрать фото</button>
+                    </div>
+                </div>
+                <input type="file" id="f-photo" accept="image/*" style="display:none" onchange="onProductPhoto(event)">
+            </div>
             <div class="add-field"><label for="f-name">Название *</label>
                 <input id="f-name" type="text" maxlength="120" autocomplete="off"></div>
             <div class="add-field"><label for="f-brand">Бренд</label>
@@ -414,7 +444,7 @@
                 <button style="background: #34C759; color: #fff" onclick="saveCustomProduct()">Сохранить</button>
             </div>
             <button class="btn-del" id="add-del" style="display:none" onclick="deleteCustomProduct()">Удалить из моей базы</button>
-            <div class="add-note">Продукт сохранится на этом устройстве и будет находиться при сканировании этого штрихкода. Индекс чистоты приложение рассчитает само.</div>
+            <div class="add-note">Продукт сохранится на этом устройстве и будет находиться при сканировании этого штрихкода. Полезность продукта приложение рассчитает само.</div>
         </div>
     </div>
 
@@ -622,6 +652,16 @@
             if (e.key === 'Enter') lookupFromInput();
         });
 
+        function purityBlock(p) {
+            const v = Math.max(0, Math.min(100, Math.round(Number(p.purity) || 0)));
+            const word = v < 40 ? 'низкая' : (v < 70 ? 'средняя' : (v < 85 ? 'хорошая' : 'высокая'));
+            return `<div class="result-cell purity-cell" style="grid-column: span 2">
+                <span>Полезность продукта</span>
+                <div class="purity-row"><b>${v}%</b><span class="purity-word">${word}</span></div>
+                <div class="purity-bar"><i class="purity-mark" style="left:${v}%"></i></div>
+            </div>`;
+        }
+
         function fmt(v, unit) { return (v === null || v === undefined) ? 'нет данных' : v + (unit || ''); }
 
         function renderResult(p) {
@@ -640,13 +680,13 @@
                     </div>
                 </div>
                 <div class="result-grid">
-                    <div class="result-cell"><span>Индекс чистоты</span><b style="color:${color}">${p.purity}%</b></div>
+                    ${purityBlock(p)}
                     <div class="result-cell"><span>Е-добавки</span><b>${p.eCount}</b></div>
                     <div class="result-cell"><span>Сахар, на 100 г</span><b>${fmt(p.sugar, ' г')}</b></div>
                     <div class="result-cell"><span>Белок, на 100 г</span><b>${fmt(p.protein, ' г')}</b></div>
                     <div class="result-cell"><span>Жиры, на 100 г</span><b>${fmt(p.fat, ' г')}</b></div>
                     <div class="result-cell"><span>Углеводы, на 100 г</span><b>${fmt(p.carbs, ' г')}</b></div>
-                    <div class="result-cell" style="grid-column: span 2"><span>Калорийность, на 100 г</span><b>${fmt(p.kcal, ' ккал')}</b></div>
+                    <div class="result-cell"><span>Калорийность, на 100 г</span><b>${fmt(p.kcal, ' ккал')}</b></div>
                     <div class="result-cell"><span><i class="ic-recycle"></i>NOVA (переработка)</span><b>${p.nova ? p.nova + ' из 4' : 'нет данных'}</b></div>
                     <div class="result-cell"><span>Nutri-Score</span><b>${p.nutriscore || 'нет данных'}</b></div>
                 </div>
@@ -656,8 +696,8 @@
                     <button class="btn-add" onclick="addCurrentToDiary()">В дневник</button>
                 </div>
                 <div class="result-note">${p.source === 'custom'
-                    ? 'Данные внесены вами и хранятся на этом устройстве. Индекс чистоты рассчитан приложением по степени переработки, числу добавок, сахару и Nutri-Score.'
-                    : 'Данные: Open Food Facts, их вносят пользователи, поэтому возможны неточности. Индекс чистоты рассчитан приложением по степени переработки, числу добавок, сахару и Nutri-Score.'}</div>
+                    ? 'Данные внесены вами и хранятся на этом устройстве. Полезность рассчитана приложением по степени переработки, числу добавок, сахару и Nutri-Score.'
+                    : 'Данные: Open Food Facts, их вносят пользователи, поэтому возможны неточности. Полезность рассчитана приложением по степени переработки, числу добавок, сахару и Nutri-Score.'}</div>
             `;
             card.style.display = 'block';
         }
@@ -675,6 +715,60 @@
         }
 
         let editingBarcode = null;
+        let formImage = '';
+
+        function renderPhotoPreview() {
+            const el = document.getElementById('f-photo-preview');
+            if (formImage) {
+                el.className = 'result-img';
+                el.innerHTML = '<img alt="" style="width:100%;height:100%;object-fit:contain">';
+                el.firstChild.src = formImage;
+            } else {
+                el.className = 'result-img placeholder';
+                el.textContent = '🛒';
+            }
+            document.getElementById('f-photo-del').style.display = formImage ? 'block' : 'none';
+        }
+
+        function clearProductPhoto() {
+            formImage = '';
+            renderPhotoPreview();
+        }
+
+        // Уменьшает фото до 400 px и сохраняет как JPEG, чтобы не забивать память устройства
+        function onProductPhoto(event) {
+            const file = event.target.files && event.target.files[0];
+            event.target.value = '';
+            if (!file) return;
+            const errEl = document.getElementById('add-err');
+            errEl.textContent = '';
+            const url = URL.createObjectURL(file);
+            const img = new Image();
+            img.onload = () => {
+                try {
+                    const max = 400;
+                    const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+                    const c = document.createElement('canvas');
+                    c.width = Math.max(1, Math.round(img.naturalWidth * scale));
+                    c.height = Math.max(1, Math.round(img.naturalHeight * scale));
+                    const ctx = c.getContext('2d');
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(0, 0, c.width, c.height);
+                    ctx.drawImage(img, 0, 0, c.width, c.height);
+                    formImage = c.toDataURL('image/jpeg', 0.8);
+                    renderPhotoPreview();
+                } catch (e) {
+                    errEl.textContent = 'Не удалось обработать фото';
+                } finally {
+                    URL.revokeObjectURL(url);
+                }
+            };
+            img.onerror = () => {
+                URL.revokeObjectURL(url);
+                errEl.textContent = 'Не удалось открыть фото';
+            };
+            img.src = url;
+        }
         function setField(id, v) {
             document.getElementById(id).value = (v === null || v === undefined) ? '' : String(v);
         }
@@ -683,6 +777,8 @@
             editingBarcode = barcode;
             const c = edit ? customItems[barcode] : null;
             document.getElementById('add-code').textContent = 'Штрихкод ' + barcode;
+            formImage = (c && c.image) || '';
+            renderPhotoPreview();
             setField('f-name', c && c.name);
             setField('f-brand', c && c.brand);
             setField('f-kcal', c && c.kcal);
@@ -753,7 +849,7 @@
                 barcode: editingBarcode,
                 name: name,
                 brand: brand,
-                image: '',
+                image: formImage,
                 sugar: sugar.v,
                 protein: protein.v,
                 fat: fat.v,
@@ -842,13 +938,13 @@
                         </div>
                     </div>
                     <div class="result-grid">
-                        <div class="result-cell"><span>Индекс чистоты</span><b style="color:${color}">${esc(p.purity)}%</b></div>
+                        ${purityBlock(p)}
                         <div class="result-cell"><span>Е-добавки</span><b>${esc(p.eCount)}</b></div>
                         <div class="result-cell"><span>Сахар, на 100 г</span><b>${fmt(p.sugar, ' г')}</b></div>
                         <div class="result-cell"><span>Белок, на 100 г</span><b>${fmt(p.protein, ' г')}</b></div>
                         <div class="result-cell"><span>Жиры, на 100 г</span><b>${fmt(p.fat, ' г')}</b></div>
                         <div class="result-cell"><span>Углеводы, на 100 г</span><b>${fmt(p.carbs, ' г')}</b></div>
-                        <div class="result-cell" style="grid-column: span 2"><span>Калорийность, на 100 г</span><b>${fmt(p.kcal, ' ккал')}</b></div>
+                        <div class="result-cell"><span>Калорийность, на 100 г</span><b>${fmt(p.kcal, ' ккал')}</b></div>
                         <div class="result-cell"><span><i class="ic-recycle"></i>NOVA (переработка)</span><b>${nova}</b></div>
                         <div class="result-cell"><span>Nutri-Score</span><b>${ns}</b></div>
                     </div>
