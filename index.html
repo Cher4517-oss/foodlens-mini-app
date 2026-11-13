@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ЭкоСкан — Анализ продуктов</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
     <style>
         :root {
             --bg-color: #F6F7F9;
@@ -174,6 +173,25 @@
             padding: 14px 28px; border-radius: 14px; font-weight: 600; font-size: 15px;
         }
 
+        #camera-feed { height: 52vh; }
+        .camera-msg { color: #fff; text-align: center; font-size: 14px; min-height: 36px; padding: 8px 4px; }
+        .camera-controls { gap: 8px; }
+        .btn-shot {
+            flex: 1.4; background: #34C759; color: #fff; border: none;
+            padding: 14px 10px; border-radius: 14px; font-weight: 700; font-size: 15px;
+        }
+        .btn-file {
+            flex: 1; background: rgba(255,255,255,0.2); color: #fff; border: none;
+            padding: 14px 10px; border-radius: 14px; font-weight: 600; font-size: 14px;
+        }
+        .camera-controls { position: relative; display: flex; justify-content: center; align-items: center; min-height: 56px; }
+        .camera-controls .btn-close-cam { position: absolute; left: 0; padding: 14px 18px; }
+        .camera-controls .btn-shot { flex: none; padding: 16px 30px; font-size: 16px; }
+        .btn-photo {
+            width: 100%; margin-top: 10px; padding: 12px; border: none; border-radius: 12px;
+            background: rgba(0,0,0,0.06); color: var(--text-main); font-weight: 600; font-size: 14px; cursor: pointer;
+        }
+
         .section-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
 
         .diary-card {
@@ -263,6 +281,8 @@
             </div>
         </div>
 
+        <button class="btn-photo" onclick="document.getElementById('photo-input').click()">📸 Распознать штрихкод по фото</button>
+        <div style="height:12px"></div>
         <div id="status-msg"></div>
         <div id="result-card"></div>
     </div>
@@ -288,10 +308,14 @@
     <div id="camera-modal">
         <div class="camera-hint">Наведите камеру на штрихкод</div>
         <video id="camera-feed" autoplay playsinline muted></video>
+        <div class="camera-msg" id="camera-msg"></div>
         <div class="camera-controls">
             <button class="btn-close-cam" onclick="closeCameraScanner()">Закрыть</button>
+            <button class="btn-shot" onclick="captureAndDecode()">Сфотографировать</button>
+            <span></span>
         </div>
     </div>
+    <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" onchange="onPhotoPicked(event)">
 
     <script>
         const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
@@ -573,14 +597,100 @@
         }
 
         // ---------- Сканер штрихкодов ----------
+        const ZXING_URLS = [
+            'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js',
+            'https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/zxing-library/0.21.3/index.min.js'
+        ];
+        let zxingPromise = null;
+
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const el = document.createElement('script');
+                el.src = src;
+                el.onload = resolve;
+                el.onerror = () => reject(new Error('load'));
+                document.head.appendChild(el);
+            });
+        }
+
+        function ensureZXing() {
+            if (window.ZXing) return Promise.resolve();
+            if (!zxingPromise) {
+                zxingPromise = (async () => {
+                    for (const u of ZXING_URLS) {
+                        try { await loadScript(u); if (window.ZXing) return; } catch (e) {}
+                    }
+                    zxingPromise = null;
+                    throw new Error('zxing');
+                })();
+            }
+            return zxingPromise;
+        }
+
+        let mfReader = null;
+        function getReader() {
+            if (!mfReader) {
+                const hints = new Map();
+                hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+                    ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8,
+                    ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.UPC_E,
+                    ZXing.BarcodeFormat.CODE_128
+                ]);
+                hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+                mfReader = new ZXing.MultiFormatReader();
+                mfReader.setHints(hints);
+            }
+            return mfReader;
+        }
+
+        function tryDecodeCanvas(canvas) {
+            try {
+                const lum = new ZXing.HTMLCanvasElementLuminanceSource(canvas);
+                const bmp = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
+                return getReader().decodeWithState(bmp).getText();
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function rotatedCanvas(canvas) {
+            const c = document.createElement('canvas');
+            c.width = canvas.height;
+            c.height = canvas.width;
+            const ctx = c.getContext('2d');
+            ctx.translate(c.width / 2, c.height / 2);
+            ctx.rotate(Math.PI / 2);
+            ctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+            return c;
+        }
+
+        // Пробует прочитать код в кадре: обычная и повёрнутая на 90° ориентация
+        function decodeSource(src, sw, sh, maxSide) {
+            const scale = Math.min(1, maxSide / Math.max(sw, sh));
+            const c = document.createElement('canvas');
+            c.width = Math.max(1, Math.round(sw * scale));
+            c.height = Math.max(1, Math.round(sh * scale));
+            c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+            return tryDecodeCanvas(c) || tryDecodeCanvas(rotatedCanvas(c));
+        }
+
+        function scanMsg(text, isError) {
+            document.getElementById('camera-msg').textContent = text || '';
+            if (document.getElementById('camera-modal').style.display !== 'flex') {
+                showStatus(text || '', !!isError);
+            }
+        }
+
         let mediaStream = null;
-        let zxingReader = null;
-        let detectorTimer = null;
+        let scanLoopActive = false;
+        let detector = null;
         let scanned = false;
 
         function onBarcodeFound(code) {
             if (scanned) return;
             scanned = true;
+            scanLoopActive = false;
             haptic('impact', 'heavy');
             closeCameraScanner();
             document.getElementById('barcode-input').value = code;
@@ -589,75 +699,150 @@
 
         async function openCameraScanner() {
             haptic('impact', 'medium');
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                showStatus('Камера недоступна в этом окне. Введите штрихкод вручную', true);
-                switchTab('home');
-                return;
-            }
             scanned = false;
             const modal = document.getElementById('camera-modal');
             const video = document.getElementById('camera-feed');
             modal.style.display = 'flex';
+            scanMsg('Запускаю камеру…');
+
+            ensureZXing().catch(() => {
+                if (!('BarcodeDetector' in window)) {
+                    scanMsg('Не загрузилась библиотека распознавания. Проверьте интернет', true);
+                }
+            });
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                scanMsg('Живая камера недоступна. Нажмите «Сфотографировать»: откроется камера телефона', true);
+                return;
+            }
 
             try {
                 mediaStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: { ideal: 'environment' } },
+                    video: {
+                        facingMode: { ideal: 'environment' },
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    },
                     audio: false
                 });
                 video.srcObject = mediaStream;
                 await video.play().catch(() => {});
-                startDecoding(video);
+
+                try {
+                    const track = mediaStream.getVideoTracks()[0];
+                    await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+                } catch (e) {}
+
+                if ('BarcodeDetector' in window) {
+                    try {
+                        detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'] });
+                    } catch (e) { detector = null; }
+                }
+
+                scanMsg('Держите штрихкод в кадре или нажмите «Сфотографировать»');
+                scanLoop(video);
             } catch (err) {
-                closeCameraScanner();
-                switchTab('home');
-                showStatus('Нет доступа к камере. Введите штрихкод вручную', true);
+                scanMsg('Нет доступа к камере. Нажмите «Сфотографировать», чтобы снять через камеру телефона', true);
             }
         }
 
-        function startDecoding(video) {
-            // Встроенный детектор (Chrome, Android), иначе ZXing
-            if ('BarcodeDetector' in window) {
-                const detector = new BarcodeDetector({
-                    formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128']
-                });
-                detectorTimer = setInterval(async () => {
-                    if (scanned || video.readyState < 2) return;
-                    try {
-                        const codes = await detector.detect(video);
-                        if (codes.length) onBarcodeFound(codes[0].rawValue);
-                    } catch (e) {}
-                }, 300);
+        async function scanLoop(video) {
+            scanLoopActive = true;
+            while (scanLoopActive && !scanned) {
+                if (video.readyState >= 2 && video.videoWidth) {
+                    let code = null;
+                    if (detector) {
+                        try {
+                            const found = await detector.detect(video);
+                            if (found.length) code = found[0].rawValue;
+                        } catch (e) {}
+                    }
+                    if (!code && window.ZXing) {
+                        code = decodeSource(video, video.videoWidth, video.videoHeight, 1280);
+                    }
+                    if (code) { onBarcodeFound(code); return; }
+                }
+                await new Promise(r => setTimeout(r, 200));
+            }
+        }
+
+        // Кнопка «Сфотографировать»: разбирает текущий кадр в полном разрешении
+        async function captureAndDecode() {
+            const video = document.getElementById('camera-feed');
+            if (!video.videoWidth) {
+                document.getElementById('photo-input').click();
                 return;
             }
-
-            if (window.ZXing) {
-                const hints = new Map();
-                hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-                    ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8,
-                    ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.UPC_E,
-                    ZXing.BarcodeFormat.CODE_128
-                ]);
-                hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-                zxingReader = new ZXing.BrowserMultiFormatReader(hints, 300);
-                zxingReader.decodeFromVideoElement(video, (result) => {
-                    if (result) onBarcodeFound(result.getText());
-                }).catch(() => {});
+            haptic('impact', 'light');
+            scanMsg('Распознаю…');
+            try { await ensureZXing(); } catch (e) {
+                scanMsg('Библиотека распознавания не загрузилась. Проверьте интернет', true);
                 return;
             }
+            const w = video.videoWidth, h = video.videoHeight;
+            let code = null;
+            for (const side of [2000, 1280, 800]) {
+                code = decodeSource(video, w, h, side);
+                if (code) break;
+            }
+            if (code) onBarcodeFound(code);
+            else scanMsg('Штрихкод не распознан. Поднесите ближе, избегайте бликов и повторите', true);
+        }
 
-            closeCameraScanner();
-            showStatus('Сканер не загрузился. Введите штрихкод вручную', true);
+        async function loadImageSource(file) {
+            if (window.createImageBitmap) {
+                try {
+                    const bmp = await createImageBitmap(file);
+                    return { src: bmp, w: bmp.width, h: bmp.height };
+                } catch (e) {}
+            }
+            return new Promise((resolve, reject) => {
+                const url = URL.createObjectURL(file);
+                const img = new Image();
+                img.onload = () => resolve({ src: img, w: img.naturalWidth, h: img.naturalHeight, url });
+                img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('img')); };
+                img.src = url;
+            });
+        }
+
+        // Распознавание по сделанному или выбранному фото
+        async function onPhotoPicked(event) {
+            const file = event.target.files && event.target.files[0];
+            event.target.value = '';
+            if (!file) return;
+            scanned = false;
+            scanLoopActive = false;
+            scanMsg('Распознаю фото…');
+            try {
+                await ensureZXing();
+            } catch (e) {
+                scanMsg('Библиотека распознавания не загрузилась. Проверьте интернет', true);
+                return;
+            }
+            try {
+                const img = await loadImageSource(file);
+                let code = null;
+                for (const side of [2000, 1400, 1000, 700]) {
+                    code = decodeSource(img.src, img.w, img.h, side);
+                    if (code) break;
+                }
+                if (img.url) URL.revokeObjectURL(img.url);
+                if (code) onBarcodeFound(code);
+                else scanMsg('Штрихкод на фото не найден. Снимите ближе и чётче или введите код вручную', true);
+            } catch (e) {
+                scanMsg('Не удалось открыть фото', true);
+            }
         }
 
         function closeCameraScanner() {
+            scanLoopActive = false;
             document.getElementById('camera-modal').style.display = 'none';
-            if (detectorTimer) { clearInterval(detectorTimer); detectorTimer = null; }
-            if (zxingReader) { try { zxingReader.reset(); } catch (e) {} zxingReader = null; }
             if (mediaStream) {
                 mediaStream.getTracks().forEach(t => t.stop());
                 mediaStream = null;
             }
             document.getElementById('camera-feed').srcObject = null;
+            document.getElementById('camera-msg').textContent = '';
         }
 
         updateUI();
