@@ -192,6 +192,32 @@
             background: rgba(0,0,0,0.06); color: var(--text-main); font-weight: 600; font-size: 14px; cursor: pointer;
         }
 
+        .btn-addprod {
+            width: 100%; margin-top: 12px; padding: 14px; border: none; border-radius: 12px;
+            background: #007AFF; color: #fff; font-weight: 600; font-size: 15px; cursor: pointer;
+        }
+        #add-modal {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-color); z-index: 1100; overflow-y: auto;
+            -webkit-overflow-scrolling: touch; padding: 16px; padding-bottom: 60px;
+        }
+        .add-inner { max-width: 480px; margin: 0 auto; }
+        .add-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+        .add-sub { font-size: 12px; color: var(--text-secondary); margin-bottom: 14px; font-family: var(--font-led); }
+        .add-group { font-size: 13px; font-weight: 600; margin: 16px 0 8px; }
+        .add-field { margin-bottom: 10px; }
+        .add-field label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+        .add-field input, .add-field select {
+            width: 100%; padding: 12px 14px; font-size: 16px;
+            border: 1px solid rgba(0,0,0,0.1); border-radius: 12px; background: #fff; outline: none;
+        }
+        .add-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .add-err { color: #FF3B30; font-size: 13px; margin: 6px 0; }
+        .add-actions { display: flex; gap: 8px; margin-top: 10px; }
+        .add-actions button { flex: 1; padding: 14px; border: none; border-radius: 12px; font-weight: 600; font-size: 15px; cursor: pointer; }
+        .add-note { font-size: 11px; color: var(--text-secondary); margin-top: 12px; line-height: 1.4; }
+        .btn-del { background: none; border: none; color: #FF3B30; font-size: 14px; font-weight: 600; padding: 14px; width: 100%; cursor: pointer; }
+
         .section-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
 
         .diary-card {
@@ -317,6 +343,58 @@
     </div>
     <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" onchange="onPhotoPicked(event)">
 
+    <div id="add-modal">
+        <div class="add-inner">
+            <div class="add-title">Новый продукт</div>
+            <div class="add-sub" id="add-code"></div>
+
+            <div class="add-field"><label for="f-name">Название *</label>
+                <input id="f-name" type="text" maxlength="120" autocomplete="off"></div>
+            <div class="add-field"><label for="f-brand">Бренд</label>
+                <input id="f-brand" type="text" maxlength="60" autocomplete="off"></div>
+
+            <div class="add-group">Пищевая ценность на 100 г</div>
+            <div class="add-row">
+                <div class="add-field"><label for="f-kcal">Калории, ккал</label>
+                    <input id="f-kcal" type="text" inputmode="decimal" autocomplete="off"></div>
+                <div class="add-field"><label for="f-protein">Белки, г</label>
+                    <input id="f-protein" type="text" inputmode="decimal" autocomplete="off"></div>
+                <div class="add-field"><label for="f-fat">Жиры, г</label>
+                    <input id="f-fat" type="text" inputmode="decimal" autocomplete="off"></div>
+                <div class="add-field"><label for="f-carbs">Углеводы, г</label>
+                    <input id="f-carbs" type="text" inputmode="decimal" autocomplete="off"></div>
+            </div>
+            <div class="add-field"><label for="f-sugar">Из углеводов сахар, г</label>
+                <input id="f-sugar" type="text" inputmode="decimal" autocomplete="off"></div>
+
+            <div class="add-group">Состав</div>
+            <div class="add-field"><label for="f-e">Количество Е-добавок</label>
+                <input id="f-e" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div>
+            <div class="add-field"><label for="f-nova">Степень переработки (NOVA)</label>
+                <select id="f-nova">
+                    <option value="">Не знаю</option>
+                    <option value="1">1 — без переработки</option>
+                    <option value="2">2 — кулинарный ингредиент</option>
+                    <option value="3">3 — переработанный</option>
+                    <option value="4">4 — ультрапереработанный</option>
+                </select></div>
+            <div class="add-field"><label for="f-nutri">Nutri-Score</label>
+                <select id="f-nutri">
+                    <option value="">Не знаю</option>
+                    <option value="A">A</option><option value="B">B</option><option value="C">C</option>
+                    <option value="D">D</option><option value="E">E</option>
+                </select></div>
+
+            <div class="add-err" id="add-err"></div>
+            <div class="add-actions">
+                <button style="background: rgba(0,0,0,0.06); color: var(--text-main)" onclick="closeAddForm()">Отмена</button>
+                <button style="background: #34C759; color: #fff" onclick="saveCustomProduct()">Сохранить</button>
+            </div>
+            <button class="btn-del" id="add-del" style="display:none" onclick="deleteCustomProduct()">Удалить из моей базы</button>
+            <div class="add-note">Продукт сохранится на этом устройстве и будет находиться при сканировании этого штрихкода. Индекс чистоты приложение рассчитает само.</div>
+        </div>
+    </div>
+
     <script>
         const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
         if (tg) {
@@ -349,6 +427,20 @@
         }
         let diaryItems = loadDiary();
         let currentProduct = null;
+
+        // Свои продукты, внесённые вручную (ключ: штрихкод)
+        const CUSTOM_KEY = 'ecoscans_custom';
+        function loadCustom() {
+            try {
+                const o = JSON.parse(localStorage.getItem(CUSTOM_KEY) || '{}');
+                return (o && typeof o === 'object') ? o : {};
+            } catch (e) { return {}; }
+        }
+        function saveCustom() {
+            try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(customItems)); return true; }
+            catch (e) { return false; }
+        }
+        let customItems = loadCustom();
 
         function esc(s) {
             return String(s == null ? '' : s)
@@ -416,6 +508,13 @@
             const n = p.nutriments || {};
             const sugar = num(n.sugars_100g);
             const protein = num(n.proteins_100g);
+            const fat = num(n.fat_100g);
+            const carbs = num(n.carbohydrates_100g);
+            let kcal = num(n['energy-kcal_100g']);
+            if (kcal === null) {
+                const kj = num(n.energy_100g);
+                if (kj !== null) kcal = kj / 4.184;
+            }
             const eCount = Array.isArray(p.additives_tags) ? p.additives_tags.length : (num(p.additives_n) || 0);
             return {
                 barcode: barcode,
@@ -424,6 +523,10 @@
                 image: p.image_front_small_url || '',
                 sugar: sugar === null ? null : Math.round(sugar * 10) / 10,
                 protein: protein === null ? null : Math.round(protein * 10) / 10,
+                fat: fat === null ? null : Math.round(fat * 10) / 10,
+                carbs: carbs === null ? null : Math.round(carbs * 10) / 10,
+                kcal: kcal === null ? null : Math.round(kcal),
+                source: 'off',
                 eCount: eCount,
                 nova: num(p.nova_group),
                 nutriscore: (p.nutriscore_grade || '').toUpperCase(),
@@ -454,9 +557,18 @@
             switchTab('home');
 
             try {
+                if (customItems[barcode]) {
+                    currentProduct = customItems[barcode];
+                    showStatus('', false);
+                    renderResult(currentProduct);
+                    haptic('notify', 'success');
+                    return;
+                }
                 const raw = await fetchProduct(barcode);
                 if (!raw) {
-                    showStatus('Продукт с кодом ' + barcode + ' не найден в Open Food Facts', true);
+                    currentProduct = null;
+                    showStatus('', false);
+                    renderNotFound(barcode);
                     haptic('notify', 'error');
                     return;
                 }
@@ -485,7 +597,7 @@
             if (e.key === 'Enter') lookupFromInput();
         });
 
-        function fmt(v, unit) { return v === null ? 'нет данных' : v + (unit || ''); }
+        function fmt(v, unit) { return (v === null || v === undefined) ? 'нет данных' : v + (unit || ''); }
 
         function renderResult(p) {
             const img = p.image
@@ -507,16 +619,150 @@
                     <div class="result-cell"><span>Е-добавки</span><b>${p.eCount}</b></div>
                     <div class="result-cell"><span>Сахар, на 100 г</span><b>${fmt(p.sugar, ' г')}</b></div>
                     <div class="result-cell"><span>Белок, на 100 г</span><b>${fmt(p.protein, ' г')}</b></div>
+                    <div class="result-cell"><span>Жиры, на 100 г</span><b>${fmt(p.fat, ' г')}</b></div>
+                    <div class="result-cell"><span>Углеводы, на 100 г</span><b>${fmt(p.carbs, ' г')}</b></div>
+                    <div class="result-cell" style="grid-column: span 2"><span>Калорийность, на 100 г</span><b>${fmt(p.kcal, ' ккал')}</b></div>
                     <div class="result-cell"><span>NOVA (переработка)</span><b>${p.nova ? p.nova + ' из 4' : 'нет данных'}</b></div>
                     <div class="result-cell"><span>Nutri-Score</span><b>${p.nutriscore || 'нет данных'}</b></div>
                 </div>
+                ${p.source === 'custom' ? `<button class="btn-photo" style="margin-top:0;margin-bottom:10px" onclick="openAddForm('${esc(p.barcode)}', true)">Изменить данные</button>` : ''}
                 <div class="result-actions">
                     <button class="btn-dismiss" onclick="dismissResult()">Закрыть</button>
                     <button class="btn-add" onclick="addCurrentToDiary()">В дневник</button>
                 </div>
-                <div class="result-note">Данные: Open Food Facts, их вносят пользователи, поэтому возможны неточности. Индекс чистоты рассчитан приложением по степени переработки, числу добавок, сахару и Nutri-Score.</div>
+                <div class="result-note">${p.source === 'custom'
+                    ? 'Данные внесены вами и хранятся на этом устройстве. Индекс чистоты рассчитан приложением по степени переработки, числу добавок, сахару и Nutri-Score.'
+                    : 'Данные: Open Food Facts, их вносят пользователи, поэтому возможны неточности. Индекс чистоты рассчитан приложением по степени переработки, числу добавок, сахару и Nutri-Score.'}</div>
             `;
             card.style.display = 'block';
+        }
+
+        function renderNotFound(barcode) {
+            const card = document.getElementById('result-card');
+            card.innerHTML = `
+                <div class="result-name">Продукт не найден</div>
+                <div class="result-code">${esc(barcode)}</div>
+                <div class="result-note" style="font-size:13px;margin-top:8px">Его нет в Open Food Facts и в вашей базе. Внесите данные с упаковки, и в следующий раз он найдётся при сканировании.</div>
+                <button class="btn-addprod" onclick="openAddForm('${esc(barcode)}', false)">Добавить продукт</button>
+                <button class="btn-photo" onclick="dismissResult()">Закрыть</button>
+            `;
+            card.style.display = 'block';
+        }
+
+        let editingBarcode = null;
+        function setField(id, v) {
+            document.getElementById(id).value = (v === null || v === undefined) ? '' : String(v);
+        }
+
+        function openAddForm(barcode, edit) {
+            editingBarcode = barcode;
+            const c = edit ? customItems[barcode] : null;
+            document.getElementById('add-code').textContent = 'Штрихкод ' + barcode;
+            setField('f-name', c && c.name);
+            setField('f-brand', c && c.brand);
+            setField('f-kcal', c && c.kcal);
+            setField('f-protein', c && c.protein);
+            setField('f-fat', c && c.fat);
+            setField('f-carbs', c && c.carbs);
+            setField('f-sugar', c && c.sugar);
+            setField('f-e', c && c.eCount);
+            setField('f-nova', c && c.nova);
+            setField('f-nutri', c && c.nutriscore);
+            document.getElementById('add-err').textContent = '';
+            document.getElementById('add-del').style.display = c ? 'block' : 'none';
+            const modal = document.getElementById('add-modal');
+            modal.style.display = 'block';
+            modal.scrollTop = 0;
+            haptic('select');
+        }
+
+        function closeAddForm() {
+            document.getElementById('add-modal').style.display = 'none';
+        }
+
+        function readNum(id, label, max) {
+            const raw = document.getElementById(id).value.trim().replace(',', '.');
+            if (raw === '') return { v: null };
+            const n = Number(raw);
+            if (!isFinite(n) || n < 0 || n > max) return { err: label + ': введите число от 0 до ' + max };
+            return { v: Math.round(n * 10) / 10 };
+        }
+
+        function saveCustomProduct() {
+            const errEl = document.getElementById('add-err');
+            const fail = (msg) => { errEl.textContent = msg; haptic('notify', 'error'); };
+
+            const name = document.getElementById('f-name').value.trim();
+            if (!name) return fail('Укажите название продукта');
+            const brand = document.getElementById('f-brand').value.trim();
+
+            const kcal = readNum('f-kcal', 'Калории', 900);
+            const protein = readNum('f-protein', 'Белки', 100);
+            const fat = readNum('f-fat', 'Жиры', 100);
+            const carbs = readNum('f-carbs', 'Углеводы', 100);
+            const sugar = readNum('f-sugar', 'Сахар', 100);
+            for (const r of [kcal, protein, fat, carbs, sugar]) {
+                if (r.err) return fail(r.err);
+            }
+
+            const sum = (protein.v || 0) + (fat.v || 0) + (carbs.v || 0);
+            if (sum > 100.5) return fail('Белки, жиры и углеводы вместе не могут превышать 100 г на 100 г продукта');
+            if (sugar.v !== null && carbs.v !== null && sugar.v > carbs.v) {
+                return fail('Сахар не может быть больше углеводов');
+            }
+
+            const eRaw = document.getElementById('f-e').value.trim();
+            let eCount = 0;
+            if (eRaw !== '') {
+                eCount = Number(eRaw);
+                if (!Number.isInteger(eCount) || eCount < 0 || eCount > 50) {
+                    return fail('Е-добавки: введите целое число от 0 до 50');
+                }
+            }
+
+            const novaRaw = document.getElementById('f-nova').value;
+            const nova = novaRaw === '' ? null : Number(novaRaw);
+            const nutri = document.getElementById('f-nutri').value;
+
+            const product = {
+                barcode: editingBarcode,
+                name: name,
+                brand: brand,
+                image: '',
+                sugar: sugar.v,
+                protein: protein.v,
+                fat: fat.v,
+                carbs: carbs.v,
+                kcal: kcal.v === null ? null : Math.round(kcal.v),
+                eCount: eCount,
+                nova: nova,
+                nutriscore: nutri,
+                purity: calcPurity({ nova_group: nova, nutriscore_grade: nutri.toLowerCase() }, sugar.v, eCount),
+                source: 'custom'
+            };
+
+            customItems[editingBarcode] = product;
+            if (!saveCustom()) {
+                delete customItems[editingBarcode];
+                return fail('Не удалось сохранить: хранилище устройства недоступно');
+            }
+            haptic('notify', 'success');
+            closeAddForm();
+            currentProduct = product;
+            showStatus('', false);
+            renderResult(product);
+            switchTab('home');
+        }
+
+        function deleteCustomProduct() {
+            if (!editingBarcode || !customItems[editingBarcode]) return;
+            if (!confirm('Удалить этот продукт из вашей базы?')) return;
+            const code = editingBarcode;
+            delete customItems[code];
+            saveCustom();
+            closeAddForm();
+            dismissResult();
+            showStatus('Продукт удалён из вашей базы', false);
         }
 
         function dismissResult() {
