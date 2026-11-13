@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ЭкоСкан — Анализ продуктов</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
     <style>
         :root {
             --bg-color: #F6F7F9;
@@ -41,45 +42,24 @@
             margin-bottom: 20px;
         }
 
-        .app-title {
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
+        .app-title { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
 
         .user-badge {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            display: flex; align-items: center; gap: 8px;
             background: rgba(0, 0, 0, 0.04);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 500;
+            padding: 6px 12px; border-radius: 20px;
+            font-size: 13px; font-weight: 500;
         }
 
         .user-avatar {
-            width: 24px;
-            height: 24px;
-            background: #007AFF;
-            color: #fff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 700;
+            width: 24px; height: 24px; background: #007AFF; color: #fff;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 700;
         }
 
-        /* Screens */
-        .screen {
-            display: none;
-        }
-        .screen.active {
-            display: block;
-        }
+        .screen { display: none; }
+        .screen.active { display: block; }
 
-        /* Trend Capsule */
         .trend-capsule {
             background: var(--card-bg);
             backdrop-filter: blur(20px);
@@ -87,236 +67,143 @@
             padding: 14px 18px;
             margin-bottom: 16px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            display: flex; flex-direction: column; gap: 8px;
         }
 
-        .trend-header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
+        .trend-header { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--text-secondary); }
+        .trend-status { font-weight: 600; color: var(--text-main); text-align: right; }
 
-        .trend-status {
-            font-weight: 600;
-            color: var(--text-main);
-        }
-
-        .progress-bar-bg {
-            width: 100%;
-            height: 6px;
-            background: rgba(0, 0, 0, 0.06);
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
+        .progress-bar-bg { width: 100%; height: 6px; background: rgba(0, 0, 0, 0.06); border-radius: 3px; overflow: hidden; }
         .progress-bar-fill {
-            width: 0%;
-            height: 100%;
+            width: 0%; height: 100%;
             background: linear-gradient(90deg, #34C759, #007AFF);
-            border-radius: 3px;
-            transition: width 0.6s ease;
+            border-radius: 3px; transition: width 0.6s ease;
         }
 
-        /* Bento Grid */
-        .bento-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-bottom: 16px;
-        }
+        .bento-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
 
         .bento-card {
             background: var(--card-bg);
             backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            border-radius: 24px; padding: 16px;
+            display: flex; flex-direction: column; justify-content: space-between;
             min-height: 120px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
         }
 
-        .bento-label {
-            font-size: 12px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        .bento-value {
-            font-family: var(--font-led);
-            font-size: 28px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            margin-top: 8px;
-        }
+        .bento-label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+        .bento-value { font-family: var(--font-led); font-size: 28px; font-weight: 700; letter-spacing: 1px; margin-top: 8px; }
 
         .mesh-green { background: linear-gradient(135deg, rgba(52, 199, 89, 0.15), rgba(0, 122, 255, 0.05)); }
         .mesh-orange { background: linear-gradient(135deg, rgba(255, 149, 0, 0.15), rgba(255, 45, 85, 0.05)); }
         .mesh-pink { background: linear-gradient(135deg, rgba(255, 45, 85, 0.15), rgba(175, 82, 222, 0.05)); }
 
-        /* Scanner Trigger Card */
         .scanner-card {
             background: linear-gradient(135deg, #1C1C1E, #2C2C2E);
-            color: #fff;
-            border-radius: 24px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            color: #fff; border-radius: 24px; padding: 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
             margin-bottom: 16px;
         }
-
-        .scanner-info h3 {
-            font-size: 16px;
-            margin-bottom: 4px;
-        }
-
-        .scanner-info p {
-            font-size: 12px;
-            color: #8E8E93;
-        }
-
+        .scanner-info h3 { font-size: 16px; margin-bottom: 4px; }
+        .scanner-info p { font-size: 12px; color: #8E8E93; }
         .scanner-icon-btn {
-            width: 48px;
-            height: 48px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
+            width: 48px; height: 48px; background: rgba(255,255,255,0.1);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;
         }
 
-        /* Camera Modal Overlay */
+        /* Manual input */
+        .manual-card {
+            background: var(--card-bg); border-radius: 20px; padding: 14px 16px;
+            margin-bottom: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        }
+        .manual-card label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+        .manual-row { display: flex; gap: 8px; }
+        .manual-row input {
+            flex: 1; min-width: 0; padding: 12px 14px; font-size: 16px;
+            border: 1px solid rgba(0,0,0,0.1); border-radius: 12px; background: #fff; outline: none;
+        }
+        .manual-row button {
+            padding: 12px 18px; border: none; border-radius: 12px;
+            background: #007AFF; color: #fff; font-weight: 600; font-size: 14px; cursor: pointer;
+        }
+        .manual-row button:disabled { opacity: 0.5; }
+
+        /* Result card */
+        #result-card {
+            display: none; background: var(--card-bg); border-radius: 24px; padding: 16px;
+            margin-bottom: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        .result-top { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+        .result-img {
+            width: 72px; height: 72px; border-radius: 14px; object-fit: contain;
+            background: #fff; border: 1px solid rgba(0,0,0,0.06); flex-shrink: 0;
+        }
+        .result-img.placeholder { display: flex; align-items: center; justify-content: center; font-size: 28px; }
+        .result-name { font-size: 16px; font-weight: 700; line-height: 1.25; }
+        .result-brand { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+        .result-code { font-size: 11px; color: var(--text-secondary); margin-top: 2px; font-family: var(--font-led); }
+        .result-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+        .result-cell { background: rgba(0,0,0,0.04); border-radius: 12px; padding: 8px 10px; }
+        .result-cell span { display: block; font-size: 11px; color: var(--text-secondary); }
+        .result-cell b { font-size: 15px; }
+        .result-actions { display: flex; gap: 8px; }
+        .result-actions button {
+            flex: 1; padding: 12px; border: none; border-radius: 12px; font-weight: 600; font-size: 14px; cursor: pointer;
+        }
+        .btn-add { background: #34C759; color: #fff; }
+        .btn-dismiss { background: rgba(0,0,0,0.06); color: var(--text-main); }
+        .result-note { font-size: 11px; color: var(--text-secondary); margin-top: 10px; line-height: 1.4; }
+
+        #status-msg {
+            display: none; text-align: center; font-size: 14px; padding: 14px;
+            margin-bottom: 16px; border-radius: 16px; background: var(--card-bg);
+        }
+        #status-msg.error { color: #FF3B30; }
+
+        /* Camera modal */
         #camera-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #000;
-            z-index: 1000;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 20px;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 1000; flex-direction: column; justify-content: space-between; padding: 20px;
         }
-
-        #camera-feed {
-            width: 100%;
-            height: 65vh;
-            object-fit: cover;
-            border-radius: 24px;
-        }
-
-        .camera-controls {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-        }
-
-        .btn-capture {
-            padding: 14px 28px;
-            background: #34C759;
-            color: #fff;
-            border-radius: 16px;
-            border: none;
-            font-weight: 600;
-            font-size: 15px;
-            cursor: pointer;
-        }
-
+        #camera-feed { width: 100%; height: 65vh; object-fit: cover; border-radius: 24px; }
+        .camera-hint { color: #fff; text-align: center; font-weight: 600; padding-top: 10px; }
+        .camera-controls { display: flex; justify-content: center; align-items: center; }
         .btn-close-cam {
-            background: rgba(255,255,255,0.2);
-            color: #fff;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 14px;
-            font-weight: 600;
+            background: rgba(255,255,255,0.2); color: #fff; border: none;
+            padding: 14px 28px; border-radius: 14px; font-weight: 600; font-size: 15px;
         }
 
-        /* Diary Section */
-        .section-title {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 12px;
-        }
+        .section-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
 
         .diary-card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 14px 16px;
-            margin-bottom: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background: var(--card-bg); border-radius: 20px; padding: 14px 16px;
+            margin-bottom: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            display: flex; justify-content: space-between; align-items: center; gap: 10px;
         }
+        .diary-info { min-width: 0; }
+        .diary-info h4 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+        .diary-info p { font-size: 12px; color: var(--text-secondary); }
+        .diary-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .diary-badge { font-weight: 700; font-size: 13px; }
+        .diary-del { background: none; border: none; font-size: 16px; color: var(--text-secondary); cursor: pointer; padding: 4px; }
 
-        .diary-info h4 {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 2px;
-        }
+        .empty-state { text-align: center; color: var(--text-secondary); padding: 40px 20px; font-size: 14px; }
 
-        .diary-info p {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .diary-badge {
-            font-weight: 700;
-            font-size: 13px;
-        }
-
-        .empty-state {
-            text-align: center;
-            color: var(--text-secondary);
-            padding: 40px 20px;
-            font-size: 14px;
-        }
-
-        /* Bottom Nav */
         .bottom-nav {
-            position: fixed;
-            bottom: 16px;
-            left: 16px;
-            right: 16px;
-            background: rgba(28, 28, 30, 0.92);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            max-width: 448px;
-            margin: 0 auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            z-index: 100;
+            position: fixed; bottom: 16px; left: 16px; right: 16px;
+            background: rgba(28, 28, 30, 0.92); backdrop-filter: blur(20px);
+            border-radius: 24px; padding: 10px 20px;
+            display: flex; justify-content: space-around; align-items: center;
+            max-width: 448px; margin: 0 auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 100;
         }
-
         .nav-item {
-            color: #8E8E93;
-            text-align: center;
-            font-size: 10px;
-            text-decoration: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
+            color: #8E8E93; text-align: center; font-size: 10px;
+            display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer;
         }
-
-        .nav-item.active {
-            color: #fff;
-        }
-
-        .nav-item span {
-            font-size: 18px;
-        }
+        .nav-item.active { color: #fff; }
+        .nav-item span { font-size: 18px; }
     </style>
 </head>
 <body>
@@ -331,7 +218,6 @@
 
     <!-- TAB 1: HOME -->
     <div id="tab-home" class="screen active">
-        <!-- Trend Capsule -->
         <div class="trend-capsule">
             <div class="trend-header">
                 <span>Рацион сегодня</span>
@@ -342,45 +228,51 @@
             </div>
         </div>
 
-        <!-- Bento Grid -->
         <div class="bento-grid">
             <div class="bento-card mesh-pink">
                 <div class="bento-label">Индекс чистоты</div>
-                <div class="bento-value" id="val-purity">0%</div>
+                <div class="bento-value" id="val-purity">—</div>
             </div>
             <div class="bento-card mesh-orange">
-                <div class="bento-label">Сахар</div>
-                <div class="bento-value" id="val-sugar">0 г</div>
+                <div class="bento-label">Сахар, на 100 г</div>
+                <div class="bento-value" id="val-sugar">—</div>
             </div>
             <div class="bento-card mesh-green">
-                <div class="bento-label">Белок</div>
-                <div class="bento-value" id="val-protein">0 г</div>
+                <div class="bento-label">Белок, на 100 г</div>
+                <div class="bento-value" id="val-protein">—</div>
             </div>
             <div class="bento-card mesh-orange">
                 <div class="bento-label">Е-добавки</div>
-                <div class="bento-value" id="val-e">0</div>
+                <div class="bento-value" id="val-e">—</div>
             </div>
         </div>
 
-        <!-- Scanner Trigger -->
         <div class="scanner-card" onclick="openCameraScanner()">
             <div class="scanner-info">
                 <h3>Сканировать продукт</h3>
-                <p>Запрос в базу данных по штрихкоду / этикетке</p>
+                <p>Данные из базы Open Food Facts по штрихкоду</p>
             </div>
             <div class="scanner-icon-btn">📷</div>
         </div>
+
+        <div class="manual-card">
+            <label for="barcode-input">Или введите штрихкод вручную</label>
+            <div class="manual-row">
+                <input id="barcode-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="14" placeholder="4600000000000">
+                <button id="barcode-btn" onclick="lookupFromInput()">Найти</button>
+            </div>
+        </div>
+
+        <div id="status-msg"></div>
+        <div id="result-card"></div>
     </div>
 
     <!-- TAB 2: DIARY -->
     <div id="tab-diary" class="screen">
         <div class="section-title">Дневник питания</div>
-        <div id="diary-container">
-            <!-- Items injected via JS -->
-        </div>
+        <div id="diary-container"></div>
     </div>
 
-    <!-- Bottom Nav -->
     <nav class="bottom-nav">
         <div class="nav-item active" id="nav-home" onclick="switchTab('home')">
             <span>🏠</span>Главная
@@ -393,61 +285,280 @@
         </div>
     </nav>
 
-    <!-- Camera View Modal -->
     <div id="camera-modal">
-        <div style="color: #fff; text-align: center; font-weight: 600; padding-top: 10px;">Поместите штрихкод в кадр</div>
-        <video id="camera-feed" autoplay playsinline></video>
+        <div class="camera-hint">Наведите камеру на штрихкод</div>
+        <video id="camera-feed" autoplay playsinline muted></video>
         <div class="camera-controls">
             <button class="btn-close-cam" onclick="closeCameraScanner()">Закрыть</button>
-            <button class="btn-capture" onclick="simulateScan()">Найти продукт</button>
         </div>
     </div>
 
     <script>
-        let tg = window.Telegram.WebApp;
-        tg.expand();
-
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            const firstName = tg.initDataUnsafe.user.first_name || "Макс";
-            document.getElementById('user-name').innerText = firstName;
-            document.getElementById('user-initial').innerText = firstName.charAt(0).toUpperCase();
+        const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+        if (tg) {
+            try { tg.ready(); tg.expand(); } catch (e) {}
+            const u = tg.initDataUnsafe && tg.initDataUnsafe.user;
+            if (u && u.first_name) {
+                document.getElementById('user-name').textContent = u.first_name;
+                document.getElementById('user-initial').textContent = u.first_name.charAt(0).toUpperCase();
+            }
         }
 
-        let mediaStream = null;
-        let diaryItems = JSON.parse(localStorage.getItem('ecoscans') || '[]');
+        const haptic = (type, style) => {
+            try {
+                if (tg && tg.HapticFeedback) {
+                    if (type === 'select') tg.HapticFeedback.selectionChanged();
+                    else if (type === 'impact') tg.HapticFeedback.impactOccurred(style || 'medium');
+                    else if (type === 'notify') tg.HapticFeedback.notificationOccurred(style || 'success');
+                }
+            } catch (e) {}
+        };
 
-        function updateUI() {
-            if (diaryItems.length > 0) {
-                let last = diaryItems[diaryItems.length - 1];
-                document.getElementById('trend-text').innerText = 'Рацион проанализирован';
-                document.getElementById('progress-fill').style.width = '85%';
-                document.getElementById('val-purity').innerText = last.purity + '%';
-                document.getElementById('val-sugar').innerText = last.sugar + ' г';
-                document.getElementById('val-protein').innerText = last.protein + ' г';
-                document.getElementById('val-e').innerText = last.eCount;
+        // ---------- Хранилище ----------
+        const STORAGE_KEY = 'ecoscans';
+        function loadDiary() {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+            catch (e) { return []; }
+        }
+        function saveDiary() {
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(diaryItems)); } catch (e) {}
+        }
+        let diaryItems = loadDiary();
+        let currentProduct = null;
+
+        function esc(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function isToday(ts) {
+            const d = new Date(ts), n = new Date();
+            return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
+        }
+
+        // ---------- Open Food Facts ----------
+        const OFF_FIELDS = [
+            'product_name', 'product_name_ru', 'brands', 'image_front_small_url',
+            'nutriments', 'additives_tags', 'additives_n', 'nova_group', 'nutriscore_grade'
+        ].join(',');
+
+        async function fetchProduct(barcode) {
+            const url = 'https://world.openfoodfacts.org/api/v2/product/' + encodeURIComponent(barcode) +
+                        '.json?fields=' + OFF_FIELDS;
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), 12000);
+            try {
+                const res = await fetch(url, { signal: ctrl.signal });
+                if (!res.ok && res.status !== 404) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                if (data.status !== 1 || !data.product) return null;
+                return data.product;
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
+        function num(v) {
+            const n = parseFloat(v);
+            return isFinite(n) ? n : null;
+        }
+
+        // Индекс чистоты — собственная эвристика на основе данных базы:
+        // степень переработки (NOVA), число добавок, сахар, Nutri-Score.
+        function calcPurity(p, sugar, eCount) {
+            let score = 100;
+            const nova = num(p.nova_group);
+            if (nova === 4) score -= 30;
+            else if (nova === 3) score -= 15;
+            else if (nova === 2) score -= 5;
+
+            score -= Math.min(eCount * 4, 24);
+
+            if (sugar !== null) {
+                if (sugar > 15) score -= 20;
+                else if (sugar > 5) score -= 10;
+                else if (sugar > 2) score -= 4;
             }
 
-            let container = document.getElementById('diary-container');
+            const ns = (p.nutriscore_grade || '').toLowerCase();
+            const nsPenalty = { a: 0, b: 0, c: 4, d: 10, e: 20 };
+            if (ns in nsPenalty) score -= nsPenalty[ns];
+
+            return Math.max(0, Math.min(100, Math.round(score)));
+        }
+
+        function parseProduct(p, barcode) {
+            const n = p.nutriments || {};
+            const sugar = num(n.sugars_100g);
+            const protein = num(n.proteins_100g);
+            const eCount = Array.isArray(p.additives_tags) ? p.additives_tags.length : (num(p.additives_n) || 0);
+            return {
+                barcode: barcode,
+                name: p.product_name_ru || p.product_name || 'Без названия',
+                brand: (p.brands || '').split(',')[0].trim(),
+                image: p.image_front_small_url || '',
+                sugar: sugar === null ? null : Math.round(sugar * 10) / 10,
+                protein: protein === null ? null : Math.round(protein * 10) / 10,
+                eCount: eCount,
+                nova: num(p.nova_group),
+                nutriscore: (p.nutriscore_grade || '').toUpperCase(),
+                purity: calcPurity(p, sugar, eCount)
+            };
+        }
+
+        // ---------- Поиск и вывод ----------
+        function showStatus(text, isError) {
+            const el = document.getElementById('status-msg');
+            el.textContent = text;
+            el.className = isError ? 'error' : '';
+            el.style.display = text ? 'block' : 'none';
+        }
+
+        let busy = false;
+        async function lookupBarcode(barcode) {
+            if (busy) return;
+            barcode = String(barcode).replace(/\D/g, '');
+            if (barcode.length < 8) {
+                showStatus('Штрихкод должен содержать минимум 8 цифр', true);
+                return;
+            }
+            busy = true;
+            document.getElementById('barcode-btn').disabled = true;
+            document.getElementById('result-card').style.display = 'none';
+            showStatus('Ищу продукт ' + barcode + '…', false);
+            switchTab('home');
+
+            try {
+                const raw = await fetchProduct(barcode);
+                if (!raw) {
+                    showStatus('Продукт с кодом ' + barcode + ' не найден в Open Food Facts', true);
+                    haptic('notify', 'error');
+                    return;
+                }
+                currentProduct = parseProduct(raw, barcode);
+                showStatus('', false);
+                renderResult(currentProduct);
+                haptic('notify', 'success');
+            } catch (err) {
+                const msg = err && err.name === 'AbortError'
+                    ? 'База не отвечает. Попробуйте ещё раз'
+                    : 'Не удалось получить данные. Проверьте интернет';
+                showStatus(msg, true);
+                haptic('notify', 'error');
+            } finally {
+                busy = false;
+                document.getElementById('barcode-btn').disabled = false;
+            }
+        }
+
+        function lookupFromInput() {
+            const input = document.getElementById('barcode-input');
+            lookupBarcode(input.value);
+        }
+
+        document.getElementById('barcode-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') lookupFromInput();
+        });
+
+        function fmt(v, unit) { return v === null ? 'нет данных' : v + (unit || ''); }
+
+        function renderResult(p) {
+            const img = p.image
+                ? `<img class="result-img" src="${esc(p.image)}" alt="" onerror="this.outerHTML='<div class=&quot;result-img placeholder&quot;>🛒</div>'">`
+                : `<div class="result-img placeholder">🛒</div>`;
+            const color = p.purity > 80 ? '#34C759' : (p.purity > 50 ? '#FF9500' : '#FF3B30');
+            const card = document.getElementById('result-card');
+            card.innerHTML = `
+                <div class="result-top">
+                    ${img}
+                    <div>
+                        <div class="result-name">${esc(p.name)}</div>
+                        ${p.brand ? `<div class="result-brand">${esc(p.brand)}</div>` : ''}
+                        <div class="result-code">${esc(p.barcode)}</div>
+                    </div>
+                </div>
+                <div class="result-grid">
+                    <div class="result-cell"><span>Индекс чистоты</span><b style="color:${color}">${p.purity}%</b></div>
+                    <div class="result-cell"><span>Е-добавки</span><b>${p.eCount}</b></div>
+                    <div class="result-cell"><span>Сахар, на 100 г</span><b>${fmt(p.sugar, ' г')}</b></div>
+                    <div class="result-cell"><span>Белок, на 100 г</span><b>${fmt(p.protein, ' г')}</b></div>
+                    <div class="result-cell"><span>NOVA (переработка)</span><b>${p.nova ? p.nova + ' из 4' : 'нет данных'}</b></div>
+                    <div class="result-cell"><span>Nutri-Score</span><b>${p.nutriscore || 'нет данных'}</b></div>
+                </div>
+                <div class="result-actions">
+                    <button class="btn-dismiss" onclick="dismissResult()">Закрыть</button>
+                    <button class="btn-add" onclick="addCurrentToDiary()">В дневник</button>
+                </div>
+                <div class="result-note">Данные: Open Food Facts, их вносят пользователи, поэтому возможны неточности. Индекс чистоты рассчитан приложением по степени переработки, числу добавок, сахару и Nutri-Score.</div>
+            `;
+            card.style.display = 'block';
+        }
+
+        function dismissResult() {
+            document.getElementById('result-card').style.display = 'none';
+            currentProduct = null;
+        }
+
+        function addCurrentToDiary() {
+            if (!currentProduct) return;
+            const timeStr = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            diaryItems.push({ ...currentProduct, time: timeStr, ts: Date.now() });
+            saveDiary();
+            haptic('notify', 'success');
+            dismissResult();
+            updateUI();
+        }
+
+        function removeDiaryItem(index) {
+            diaryItems.splice(index, 1);
+            saveDiary();
+            updateUI();
+        }
+
+        // ---------- Интерфейс ----------
+        function updateUI() {
+            const todayItems = diaryItems.filter(i => i.ts && isToday(i.ts));
+
+            if (todayItems.length > 0) {
+                const last = todayItems[todayItems.length - 1];
+                const avg = Math.round(todayItems.reduce((s, i) => s + i.purity, 0) / todayItems.length);
+                document.getElementById('trend-text').textContent =
+                    'Продуктов: ' + todayItems.length + ', средняя чистота ' + avg + '%';
+                document.getElementById('progress-fill').style.width = avg + '%';
+                document.getElementById('val-purity').textContent = last.purity + '%';
+                document.getElementById('val-sugar').textContent = last.sugar === null ? '—' : last.sugar + ' г';
+                document.getElementById('val-protein').textContent = last.protein === null ? '—' : last.protein + ' г';
+                document.getElementById('val-e').textContent = last.eCount;
+            } else {
+                document.getElementById('trend-text').textContent = 'Пусто (начните сканирование)';
+                document.getElementById('progress-fill').style.width = '0%';
+                ['val-purity', 'val-sugar', 'val-protein', 'val-e'].forEach(id => {
+                    document.getElementById(id).textContent = '—';
+                });
+            }
+
+            const container = document.getElementById('diary-container');
             if (diaryItems.length === 0) {
                 container.innerHTML = `<div class="empty-state">Дневник пуст. Отсканируйте первый продукт!</div>`;
             } else {
-                container.innerHTML = diaryItems.slice().reverse().map(item => `
+                container.innerHTML = diaryItems.map((item, idx) => ({ item, idx })).reverse().map(({ item, idx }) => `
                     <div class="diary-card">
                         <div class="diary-info">
-                            <h4>${item.name}</h4>
-                            <p>${item.time} • Сахар: ${item.sugar}г, Белок: ${item.protein}г</p>
+                            <h4>${esc(item.name)}</h4>
+                            <p>${esc(item.time)} • Сахар: ${item.sugar === null ? '—' : esc(item.sugar) + ' г'}, Белок: ${item.protein === null ? '—' : esc(item.protein) + ' г'}</p>
                         </div>
-                        <div class="diary-badge" style="color: ${item.purity > 80 ? '#34C759' : '#FF9500'}">${item.purity}%</div>
+                        <div class="diary-right">
+                            <div class="diary-badge" style="color: ${item.purity > 80 ? '#34C759' : (item.purity > 50 ? '#FF9500' : '#FF3B30')}">${esc(item.purity)}%</div>
+                            <button class="diary-del" onclick="removeDiaryItem(${idx})" aria-label="Удалить">✕</button>
+                        </div>
                     </div>
                 `).join('');
             }
         }
 
-        updateUI();
-
         function switchTab(tab) {
-            if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
-            
+            haptic('select');
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
@@ -457,49 +568,99 @@
             } else if (tab === 'diary') {
                 document.getElementById('tab-diary').classList.add('active');
                 document.getElementById('nav-diary').classList.add('active');
-                updateUI();
             }
+            updateUI();
+        }
+
+        // ---------- Сканер штрихкодов ----------
+        let mediaStream = null;
+        let zxingReader = null;
+        let detectorTimer = null;
+        let scanned = false;
+
+        function onBarcodeFound(code) {
+            if (scanned) return;
+            scanned = true;
+            haptic('impact', 'heavy');
+            closeCameraScanner();
+            document.getElementById('barcode-input').value = code;
+            lookupBarcode(code);
         }
 
         async function openCameraScanner() {
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-            document.getElementById('camera-modal').style.display = 'flex';
-            try {
-                mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                document.getElementById('camera-feed').srcObject = mediaStream;
-            } catch (err) {
-                alert('Нет доступа к камере.');
-                closeCameraScanner();
+            haptic('impact', 'medium');
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showStatus('Камера недоступна в этом окне. Введите штрихкод вручную', true);
+                switchTab('home');
+                return;
             }
+            scanned = false;
+            const modal = document.getElementById('camera-modal');
+            const video = document.getElementById('camera-feed');
+            modal.style.display = 'flex';
+
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { ideal: 'environment' } },
+                    audio: false
+                });
+                video.srcObject = mediaStream;
+                await video.play().catch(() => {});
+                startDecoding(video);
+            } catch (err) {
+                closeCameraScanner();
+                switchTab('home');
+                showStatus('Нет доступа к камере. Введите штрихкод вручную', true);
+            }
+        }
+
+        function startDecoding(video) {
+            // Встроенный детектор (Chrome, Android), иначе ZXing
+            if ('BarcodeDetector' in window) {
+                const detector = new BarcodeDetector({
+                    formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128']
+                });
+                detectorTimer = setInterval(async () => {
+                    if (scanned || video.readyState < 2) return;
+                    try {
+                        const codes = await detector.detect(video);
+                        if (codes.length) onBarcodeFound(codes[0].rawValue);
+                    } catch (e) {}
+                }, 300);
+                return;
+            }
+
+            if (window.ZXing) {
+                const hints = new Map();
+                hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+                    ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8,
+                    ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.UPC_E,
+                    ZXing.BarcodeFormat.CODE_128
+                ]);
+                hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+                zxingReader = new ZXing.BrowserMultiFormatReader(hints, 300);
+                zxingReader.decodeFromVideoElement(video, (result) => {
+                    if (result) onBarcodeFound(result.getText());
+                }).catch(() => {});
+                return;
+            }
+
+            closeCameraScanner();
+            showStatus('Сканер не загрузился. Введите штрихкод вручную', true);
         }
 
         function closeCameraScanner() {
             document.getElementById('camera-modal').style.display = 'none';
+            if (detectorTimer) { clearInterval(detectorTimer); detectorTimer = null; }
+            if (zxingReader) { try { zxingReader.reset(); } catch (e) {} zxingReader = null; }
             if (mediaStream) {
                 mediaStream.getTracks().forEach(t => t.stop());
                 mediaStream = null;
             }
+            document.getElementById('camera-feed').srcObject = null;
         }
 
-        function simulateScan() {
-            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-            closeCameraScanner();
-
-            // Имитируем загрузку из базы данных продуктов по штрихкоду
-            const catalog = [
-                { name: "Органический греческий йогурт 2%", purity: 94, sugar: 3.2, protein: 10.5, eCount: 0 },
-                { name: "Про протеиновый батончик без сахара", purity: 88, sugar: 1.2, protein: 21.0, eCount: 1 },
-                { name: "Авокадо свежее (100г)", purity: 99, sugar: 0.7, protein: 2.0, eCount: 0 }
-            ];
-            const randomProduct = catalog[Math.floor(Math.random() * catalog.length)];
-            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            diaryItems.push({ ...randomProduct, time: timeStr });
-            localStorage.setItem('ecoscans', JSON.stringify(diaryItems));
-
-            updateUI();
-            switchTab('home');
-        }
+        updateUI();
     </script>
 </body>
 </html>
