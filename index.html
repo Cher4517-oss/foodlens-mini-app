@@ -32,7 +32,7 @@
             color: var(--text-main);
             padding: 16px;
             padding-top: calc(16px + var(--safe-top));
-            padding-bottom: calc(100px + var(--safe-bottom));
+            padding-bottom: calc(170px + var(--safe-bottom));
             max-width: 480px;
             margin: 0 auto;
         }
@@ -116,18 +116,18 @@
 
         /* Manual input */
         .manual-card {
-            background: var(--card-bg); border-radius: 20px; padding: 14px 16px;
+            background: var(--card-bg); border-radius: 22px; padding: 16px;
             margin-bottom: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);
         }
-        .manual-card label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+        .manual-card label { display: block; font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 10px; }
         .manual-row { display: flex; gap: 8px; }
         .manual-row input {
-            flex: 1; min-width: 0; padding: 12px 14px; font-size: 16px;
-            border: 1px solid rgba(0,0,0,0.1); border-radius: 12px; background: #fff; outline: none;
+            flex: 1; min-width: 0; padding: 13px 14px; font-size: 17px;
+            border: 1px solid rgba(0,0,0,0.1); border-radius: 14px; background: #fff; outline: none;
         }
         .manual-row button {
-            padding: 12px 18px; border: none; border-radius: 12px;
-            background: #007AFF; color: #fff; font-weight: 600; font-size: 14px; cursor: pointer;
+            padding: 13px 20px; border: none; border-radius: 14px;
+            background: #007AFF; color: #fff; font-weight: 600; font-size: 15px; cursor: pointer;
         }
         .manual-row button:disabled { opacity: 0.5; }
 
@@ -276,22 +276,61 @@
         .detail-card { background: var(--card-bg); border-radius: 24px; padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
         .detail-time { font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; }
 
+        .recent-title { font-size: 16px; font-weight: 700; margin: 8px 4px 10px; }
+        .recent-item {
+            display: flex; align-items: center; gap: 12px; cursor: pointer;
+            background: var(--card-bg); border-radius: 20px; padding: 10px 14px 10px 10px;
+            margin-bottom: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        }
+        .recent-thumb {
+            width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0; overflow: hidden;
+            background: #fff; border: 1px solid rgba(0,0,0,0.06);
+            display: flex; align-items: center; justify-content: center; font-size: 22px;
+        }
+        .recent-thumb img { width: 100%; height: 100%; object-fit: contain; }
+        .recent-info { flex: 1; min-width: 0; }
+        .recent-info h4 { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .recent-info p { font-size: 12px; color: var(--text-secondary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .recent-score { font-weight: 700; font-size: 14px; flex-shrink: 0; }
+        .recent-hint {
+            background: var(--card-bg); border-radius: 20px; padding: 18px 16px; text-align: center;
+            color: var(--text-secondary); font-size: 13px; line-height: 1.45;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        }
         .empty-state { text-align: center; color: var(--text-secondary); padding: 40px 20px; font-size: 14px; }
 
+        /* Нижняя панель */
         .bottom-nav {
-            position: fixed; bottom: calc(16px + var(--safe-bottom)); left: 16px; right: 16px;
-            background: rgba(28, 28, 30, 0.92); backdrop-filter: blur(20px);
-            border-radius: 24px; padding: 10px 20px;
-            display: flex; justify-content: space-around; align-items: center;
-            max-width: 448px; margin: 0 auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 100;
+            position: fixed; bottom: calc(12px + var(--safe-bottom)); left: 16px; right: 16px;
+            max-width: 448px; margin: 0 auto; z-index: 100;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            padding: 10px; border-radius: 34px;
+            background: #007AFF;
+            box-shadow: 0 8px 24px rgba(0, 122, 255, 0.3);
+        }
+        .nav-scan {
+            display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+            padding: 9px 20px; border-radius: 999px; color: #fff;
+            font-size: 15px; font-weight: 600;
+            background: rgba(255, 255, 255, 0.22);
+        }
+        .nav-scan svg { width: 20px; height: 20px; }
+        .nav-row {
+            width: 100%; display: flex; justify-content: space-around; align-items: center;
+            padding: 6px; border-radius: 26px;
+            background: rgba(255, 255, 255, 0.14);
         }
         .nav-item {
-            color: #8E8E93; text-align: center; font-size: 10px;
+            flex: 1; max-width: 150px; padding: 8px 6px; border-radius: 20px;
+            color: rgba(255, 255, 255, 0.78); text-align: center; font-size: 12px; font-weight: 500;
             display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer;
+            transition: background 0.2s, color 0.2s;
         }
-        .nav-item.active { color: #fff; }
-        .nav-item span { font-size: 18px; }
+        .nav-item svg { width: 24px; height: 24px; }
+        .nav-item.active { color: #fff; background: rgba(255, 255, 255, 0.26); }
+        .bottom-nav svg {
+            fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+        }
     </style>
 </head>
 <body>
@@ -335,26 +374,17 @@
             </div>
         </div>
 
-        <div class="scanner-card" onclick="openCameraScanner()">
-            <div class="scanner-info">
-                <h3>Сканировать продукт</h3>
-                <p>Данные из базы Open Food Facts по штрихкоду</p>
-            </div>
-            <div class="scanner-icon-btn">📷</div>
-        </div>
-
         <div class="manual-card">
-            <label for="barcode-input">Или введите штрихкод вручную</label>
+            <label for="barcode-input">Введите штрихкод</label>
             <div class="manual-row">
                 <input id="barcode-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="14" placeholder="4600000000000">
                 <button id="barcode-btn" onclick="lookupFromInput()">Найти</button>
             </div>
         </div>
 
-        <button class="btn-photo" onclick="document.getElementById('photo-input').click()">📸 Распознать штрихкод по фото</button>
-        <div style="height:12px"></div>
         <div id="status-msg"></div>
         <div id="result-card"></div>
+        <div id="recent-section"></div>
     </div>
 
     <!-- TAB 2: DIARY -->
@@ -364,14 +394,19 @@
     </div>
 
     <nav class="bottom-nav">
-        <div class="nav-item active" id="nav-home" onclick="switchTab('home')">
-            <span>🏠</span>Главная
+        <div class="nav-scan" onclick="openCameraScanner()">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.500A2.500 2.500 0 0 1 6.500 6H8l1.200-2h5.600L16 6h1.500A2.500 2.500 0 0 1 20 8.500v8A2.500 2.500 0 0 1 17.500 19h-11A2.500 2.500 0 0 1 4 16.500z"/><circle cx="12" cy="12.500" r="3.300"/></svg>
+            Сканировать
         </div>
-        <div class="nav-item" onclick="openCameraScanner()">
-            <span>📷</span>Сканер
-        </div>
-        <div class="nav-item" id="nav-diary" onclick="switchTab('diary')">
-            <span>📖</span>Дневник
+        <div class="nav-row">
+            <div class="nav-item active" id="nav-home" onclick="switchTab('home')">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.200 12 4l8 7.200V19a1.500 1.500 0 0 1-1.500 1.500H15v-5.500H9v5.500H5.500A1.500 1.500 0 0 1 4 19z"/></svg>
+                Главная
+            </div>
+            <div class="nav-item" id="nav-diary" onclick="switchTab('diary')">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.500A1.500 1.500 0 0 1 6.500 3H19v15.500H6.500A1.500 1.500 0 0 0 5 20zM5 20a1.500 1.500 0 0 0 1.500 1.500H19V18.500M9 8h6M9 12h6"/></svg>
+                Дневник
+            </div>
         </div>
     </nav>
 
@@ -517,6 +552,57 @@
         }
         let customItems = loadCustom();
 
+        // Недавно просмотренные продукты (последние 5, без повторов)
+        const RECENT_KEY = 'ecoscans_recent';
+        function loadRecent() {
+            try {
+                const a = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+                return Array.isArray(a) ? a : [];
+            } catch (e) { return []; }
+        }
+        let recentItems = loadRecent();
+        function saveRecent() {
+            try { localStorage.setItem(RECENT_KEY, JSON.stringify(recentItems)); } catch (e) {}
+        }
+        function pushRecent(p) {
+            if (!p || !p.barcode) return;
+            recentItems = recentItems.filter(r => r.barcode !== p.barcode);
+            recentItems.unshift({ barcode: p.barcode, name: p.name, brand: p.brand || '', image: p.image || '', purity: p.purity });
+            recentItems = recentItems.slice(0, 5);
+            saveRecent();
+            renderRecent();
+        }
+        function removeRecent(barcode) {
+            recentItems = recentItems.filter(r => r.barcode !== barcode);
+            saveRecent();
+            renderRecent();
+        }
+        function openRecent(barcode) {
+            lookupBarcode(barcode).then(() => {
+                const card = document.getElementById('result-card');
+                if (card.style.display !== 'none') card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+        function renderRecent() {
+            const box = document.getElementById('recent-section');
+            if (!box) return;
+            if (!recentItems.length) {
+                box.innerHTML = '<div class="recent-hint">Здесь появятся продукты, которые вы недавно искали. Отсканируйте первый или введите штрихкод выше.</div>';
+                return;
+            }
+            box.innerHTML = '<div class="recent-title">Недавно искали</div>' + recentItems.map(r => {
+                const thumb = r.image
+                    ? '<img alt="" src="' + esc(r.image) + '" onerror="this.outerHTML=\'🛒\'">'
+                    : '🛒';
+                const color = r.purity > 80 ? '#34C759' : (r.purity > 50 ? '#FF9500' : '#FF3B30');
+                return '<div class="recent-item" onclick="openRecent(\'' + esc(r.barcode) + '\')">' +
+                    '<div class="recent-thumb">' + thumb + '</div>' +
+                    '<div class="recent-info"><h4>' + esc(r.name) + '</h4><p>' + esc(r.brand || r.barcode) + '</p></div>' +
+                    '<div class="recent-score" style="color:' + color + '">' + esc(r.purity) + '%</div>' +
+                    '</div>';
+            }).join('');
+        }
+
         function esc(s) {
             return String(s == null ? '' : s)
                 .replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -635,6 +721,7 @@
                 if (customItems[barcode]) {
                     currentProduct = customItems[barcode];
                     refreshDiaryEntries(currentProduct);
+                    pushRecent(currentProduct);
                     showStatus('', false);
                     renderResult(currentProduct);
                     haptic('notify', 'success');
@@ -650,6 +737,7 @@
                 }
                 currentProduct = parseProduct(raw, barcode);
                 refreshDiaryEntries(currentProduct);
+                pushRecent(currentProduct);
                 showStatus('', false);
                 renderResult(currentProduct);
                 haptic('notify', 'success');
@@ -898,6 +986,7 @@
             closeAddForm();
             currentProduct = product;
             refreshDiaryEntries(product);
+            pushRecent(product);
             showStatus('', false);
             renderResult(product);
             switchTab('home');
@@ -909,6 +998,7 @@
             const code = editingBarcode;
             delete customItems[code];
             saveCustom();
+            removeRecent(code);
             closeAddForm();
             dismissResult();
             showStatus('Продукт удалён из вашей базы', false);
@@ -998,6 +1088,7 @@
 
         // ---------- Интерфейс ----------
         function updateUI() {
+            renderRecent();
             const todayItems = diaryItems.filter(i => i.ts && isToday(i.ts));
 
             if (todayItems.length > 0) {
