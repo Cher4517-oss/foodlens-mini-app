@@ -317,17 +317,47 @@
         .nav-scan svg { width: 20px; height: 20px; }
         .nav-row {
             width: 100%; display: flex; justify-content: space-around; align-items: center;
-            padding: 6px; border-radius: 26px;
+            position: relative; padding: 6px 0; border-radius: 26px;
             background: rgba(255, 255, 255, 0.14);
         }
         .nav-item {
-            flex: 1; max-width: 150px; padding: 8px 6px; border-radius: 20px;
+            flex: 1; padding: 8px 6px; border-radius: 22px;
             color: rgba(255, 255, 255, 0.78); text-align: center; font-size: 12px; font-weight: 500;
             display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer;
-            transition: background 0.2s, color 0.2s;
+            position: relative; z-index: 1;
+            transition: color 0.25s;
         }
         .nav-item svg { width: 24px; height: 24px; }
-        .nav-item.active { color: #fff; background: rgba(255, 255, 255, 0.26); }
+        .nav-item.active { color: #fff; }
+        .nav-item svg { transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .nav-item.active svg { transform: scale(1.14); }
+        .nav-item.active { font-weight: 600; }
+        .nav-blob {
+            position: absolute; top: -3px; bottom: -3px; left: 0; width: 0;
+            border-radius: 28px; pointer-events: none; z-index: 0; transform-origin: center;
+            will-change: left, width, transform;
+            background:
+                radial-gradient(110% 80% at 25% 0%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 60%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.2));
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow:
+                inset 0 2px 2px rgba(255, 255, 255, 0.75),
+                inset 0 -3px 6px rgba(0, 60, 170, 0.22),
+                inset 3px 0 4px rgba(255, 120, 160, 0.22),
+                inset -3px 0 4px rgba(90, 220, 255, 0.3),
+                0 6px 14px rgba(0, 40, 120, 0.3);
+        }
+        .nav-row { transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); touch-action: none; user-select: none; -webkit-user-select: none; }
+        .nav-item.lens-over { color: #fff; font-weight: 600; }
+        .nav-item.lens-over svg { transform: scale(1.14); }
+        .nav-row.dragging .nav-item.active:not(.lens-over) { color: rgba(255, 255, 255, 0.78); font-weight: 500; }
+        .nav-row.dragging .nav-item.active:not(.lens-over) svg { transform: none; }
+        .nav-scan { transition: transform 0.15s; }
+        .nav-scan:active { transform: scale(0.94); }
+        @media (prefers-reduced-motion: reduce) {
+            .nav-blob { transition: none !important; }
+            .nav-row, .nav-item svg { transition: none !important; }
+        }
         .bottom-nav svg {
             fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
         }
@@ -399,11 +429,12 @@
             Сканировать
         </div>
         <div class="nav-row">
-            <div class="nav-item active" id="nav-home" onclick="switchTab('home')">
+            <div class="nav-blob" id="nav-blob"></div>
+            <div class="nav-item active" id="nav-home" data-tab="home" onclick="switchTab('home')">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.200 12 4l8 7.200V19a1.500 1.500 0 0 1-1.500 1.500H15v-5.500H9v5.500H5.500A1.500 1.500 0 0 1 4 19z"/></svg>
                 Главная
             </div>
-            <div class="nav-item" id="nav-diary" onclick="switchTab('diary')">
+            <div class="nav-item" id="nav-diary" data-tab="diary" onclick="switchTab('diary')">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.500A1.500 1.500 0 0 1 6.500 3H19v15.500H6.500A1.500 1.500 0 0 0 5 20zM5 20a1.500 1.500 0 0 0 1.500 1.500H19V18.500M9 8h6M9 12h6"/></svg>
                 Дневник
             </div>
@@ -1128,6 +1159,127 @@
             }
         }
 
+        const lens = { L: 0, R: 0, vL: 0, vR: 0, tL: 0, tR: 0, dir: 1, raf: null, last: 0, ready: false, dragging: false };
+
+        function lensRender() {
+            const blob = document.getElementById('nav-blob');
+            blob.style.left = lens.L + 'px';
+            blob.style.width = Math.max(10, lens.R - lens.L) + 'px';
+            const speed = (Math.abs(lens.vL) + Math.abs(lens.vR)) / 2;
+            blob.style.transform = 'scaleY(' + (1 + Math.min(1, speed / 900) * 0.14).toFixed(3) + ')';
+        }
+
+        function lensStep(ts) {
+            const dt = Math.min(0.032, (ts - lens.last) / 1000 || 0.016);
+            lens.last = ts;
+            const lead = { k: 300, c: 24 }, trail = { k: 120, c: 14 };
+            const pR = lens.dir > 0 ? lead : trail;
+            const pL = lens.dir > 0 ? trail : lead;
+            lens.vR += (-pR.k * (lens.R - lens.tR) - pR.c * lens.vR) * dt;
+            lens.R += lens.vR * dt;
+            lens.vL += (-pL.k * (lens.L - lens.tL) - pL.c * lens.vL) * dt;
+            lens.L += lens.vL * dt;
+            lensRender();
+            const settled = Math.abs(lens.R - lens.tR) < 0.3 && Math.abs(lens.L - lens.tL) < 0.3 &&
+                            Math.abs(lens.vR) < 3 && Math.abs(lens.vL) < 3;
+            if (settled && !lens.dragging) {
+                lens.L = lens.tL; lens.R = lens.tR; lens.vL = 0; lens.vR = 0;
+                lensRender();
+                lens.raf = null;
+                return;
+            }
+            lens.raf = requestAnimationFrame(lensStep);
+        }
+
+        function lensTo(l, w, animate) {
+            const blob = document.getElementById('nav-blob');
+            lens.tL = l; lens.tR = l + w;
+            blob.style.transition = 'none';
+            if (!animate || !lens.ready) {
+                lens.L = l; lens.R = l + w; lens.vL = 0; lens.vR = 0; lens.ready = true;
+                lensRender();
+                return;
+            }
+            const cC = (lens.L + lens.R) / 2, tC = (lens.tL + lens.tR) / 2;
+            if (Math.abs(tC - cC) > 1) lens.dir = tC > cC ? 1 : -1;
+            if (!lens.raf) {
+                lens.last = performance.now();
+                lens.raf = requestAnimationFrame(lensStep);
+            }
+        }
+
+        function moveNavBlob(animate) {
+            const row = document.querySelector('.nav-row');
+            const act = row && row.querySelector('.nav-item.active');
+            if (!act || !act.offsetWidth) return;
+            lensTo(act.offsetLeft, act.offsetWidth, animate);
+        }
+
+        // Перетаскивание линзы пальцем: линза тянется за пальцем и садится на ближайшую вкладку
+        (function () {
+            const row = document.querySelector('.nav-row');
+            if (!row) return;
+            let drag = null;
+            let suppressClick = false;
+            const tabs = () => Array.prototype.slice.call(row.querySelectorAll('.nav-item'));
+
+            row.addEventListener('pointerdown', (e) => {
+                const act = row.querySelector('.nav-item.active');
+                if (!act) return;
+                const r = act.getBoundingClientRect();
+                if (e.clientX < r.left || e.clientX > r.right) return;
+                drag = { id: e.pointerId, x0: e.clientX, l0: act.offsetLeft, w: act.offsetWidth, moved: false, hit: act };
+            });
+
+            row.addEventListener('pointermove', (e) => {
+                if (!drag || e.pointerId !== drag.id) return;
+                const dx = e.clientX - drag.x0;
+                if (!drag.moved) {
+                    if (Math.abs(dx) < 6) return;
+                    drag.moved = true;
+                    lens.dragging = true;
+                    try { row.setPointerCapture(e.pointerId); } catch (err) {}
+                    row.classList.add('dragging');
+                }
+                const items = tabs();
+                const last = items[items.length - 1];
+                const min = items[0].offsetLeft;
+                const max = last.offsetLeft + last.offsetWidth - drag.w;
+                const l = Math.min(max, Math.max(min, drag.l0 + dx));
+                lensTo(l, drag.w, true);
+                const center = l + drag.w / 2;
+                let hit = items[0];
+                items.forEach(it => { if (center >= it.offsetLeft) hit = it; });
+                items.forEach(it => it.classList.toggle('lens-over', it === hit));
+                if (hit !== drag.hit) { drag.hit = hit; haptic('select'); }
+            });
+
+            function endDrag(e) {
+                if (!drag || e.pointerId !== drag.id) return;
+                const d = drag;
+                drag = null;
+                if (!d.moved) return;
+                suppressClick = true;
+                setTimeout(() => { suppressClick = false; }, 50);
+                try { row.releasePointerCapture(e.pointerId); } catch (err) {}
+                lens.dragging = false;
+                row.classList.remove('dragging');
+                tabs().forEach(it => it.classList.remove('lens-over'));
+                const tab = d.hit && d.hit.getAttribute('data-tab');
+                if (tab) switchTab(tab);
+                moveNavBlob(true);
+            }
+            row.addEventListener('pointerup', endDrag);
+            row.addEventListener('pointercancel', endDrag);
+            row.addEventListener('click', (e) => {
+                if (suppressClick) { e.stopPropagation(); e.preventDefault(); }
+            }, true);
+        })();
+
+        window.addEventListener('resize', () => { lens.ready = false; moveNavBlob(false); });
+        window.addEventListener('load', () => { lens.ready = false; moveNavBlob(false); });
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { lens.ready = false; moveNavBlob(false); });
+
         function switchTab(tab) {
             haptic('select');
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -1140,6 +1292,7 @@
                 document.getElementById('tab-diary').classList.add('active');
                 document.getElementById('nav-diary').classList.add('active');
             }
+            moveNavBlob(true);
             updateUI();
         }
 
@@ -1393,6 +1546,7 @@
         }
 
         updateUI();
+        moveNavBlob(false);
     </script>
 </body>
 </html>
