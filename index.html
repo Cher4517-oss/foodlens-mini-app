@@ -281,24 +281,20 @@
         .swipe-row.removing { opacity: 0; }
         .swipe-del {
             position: absolute; top: 0; right: 0; bottom: 0; width: 0; overflow: hidden;
-            display: flex; align-items: center; justify-content: flex-end;
             background: transparent; border: 0; padding: 0; font-family: inherit; cursor: pointer;
-            -webkit-tap-highlight-color: transparent; transition: background-color .2s;
+            -webkit-tap-highlight-color: transparent; border-radius: 20px;
         }
-        .swipe-del .sd-in {
-            flex: none; width: 84px; display: flex; flex-direction: column; align-items: center; gap: 3px;
-            transition: transform .25s cubic-bezier(.2,.8,.2,1);
-        }
+        .swipe-del .sd-in { position: absolute; right: 18px; top: 50%; margin-top: -29px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
         .swipe-del .sd-btn {
-            width: 40px; height: 40px; border-radius: 50%; background: #FF3B30; color: #fff;
-            display: flex; align-items: center; justify-content: center;
+            height: 40px; width: 40px; border-radius: 20px; background: #FF3B30; color: #fff;
+            display: flex; align-items: center; justify-content: flex-start; padding-left: 10px; box-sizing: border-box;
+            will-change: width;
         }
-        .swipe-del .sd-btn svg { width: 20px; height: 20px; }
-        .swipe-del .sd-lbl { font-size: 11px; color: var(--text-secondary); }
-        .swipe-row.full .swipe-del { background: #FF3B30; }
-        .swipe-row.full .sd-lbl { color: #fff; }
-        .swipe-row.full .sd-btn { background: transparent; }
-        .swipe-row.full .sd-in { transform: translateX(-6px) scale(1.08); }
+        .swipe-del .sd-btn svg { width: 20px; height: 20px; flex: none; transition: transform .2s cubic-bezier(.2,.8,.2,1); }
+        .swipe-row.full .sd-btn svg { transform: scale(1.15); }
+        .swipe-del .sd-lbl { font-size: 11px; color: var(--text-secondary); align-self: center; width: 40px; text-align: center; white-space: nowrap; margin-right: 0; transition: opacity .15s; }
+        .swipe-row.wide .sd-lbl { opacity: 0; }
+        .swipe-row.go .swipe-del, .swipe-row.go .sd-btn { transition: width .26s cubic-bezier(.2,.8,.2,1); }
         .recent-item {
             display: flex; align-items: center; gap: 12px; cursor: pointer;
             background: var(--card-bg); border-radius: 20px; padding: 10px 14px 10px 10px;
@@ -678,15 +674,20 @@
         (function initSwipe() {
             const box = document.getElementById('recent-section');
             if (!box) return;
-            const REVEAL = 84;
+            const REVEAL = 76;
             let st = null, openRow = null, suppressClick = false;
 
             function setX(row, x, snap) {
                 const it = row.firstElementChild.nextElementSibling;
                 const del = row.firstElementChild;
                 it.classList.toggle('snap', !!snap);
+                row.classList.toggle('go', !!snap);
                 it.style.transform = x ? 'translate3d(' + x + 'px,0,0)' : '';
-                del.style.width = Math.max(0, -x) + 'px';
+                const rv = Math.max(0, -x);
+                del.style.width = rv + 'px';
+                const pw = Math.max(40, rv - 36);
+                del.firstElementChild.firstElementChild.style.width = pw + 'px';
+                row.classList.toggle('wide', pw > 52);
                 row._x = x;
             }
             function closeRow(row) {
@@ -702,13 +703,14 @@
                 void row.offsetHeight;
                 const it = row.firstElementChild.nextElementSibling;
                 it.classList.add('snap');
+                row.classList.add('go', 'full', 'wide');
                 it.style.transform = 'translate3d(' + (-row.offsetWidth) + 'px,0,0)';
                 row.firstElementChild.style.width = row.offsetWidth + 'px';
-                row.classList.add('full', 'removing');
-                row.style.height = '0px'; row.style.marginBottom = '0px';
+                row.firstElementChild.firstElementChild.firstElementChild.style.width = (row.offsetWidth - 36) + 'px';
+                setTimeout(() => { row.classList.add('removing'); row.style.height = '0px'; row.style.marginBottom = '0px'; }, 200);
                 if (tg && tg.HapticFeedback) { try { tg.HapticFeedback.impactOccurred('medium'); } catch (e) {} }
                 if (openRow === row) openRow = null;
-                setTimeout(() => removeRecent(code), 290);
+                setTimeout(() => removeRecent(code), 520);
             }
 
             box.addEventListener('pointerdown', e => {
