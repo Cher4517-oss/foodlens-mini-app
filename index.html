@@ -263,9 +263,12 @@
 
         .diary-card {
             background: var(--card-bg); border-radius: 20px; padding: 14px 16px;
-            margin-bottom: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
             display: flex; justify-content: space-between; align-items: center; gap: 10px;
+            touch-action: pan-y; will-change: transform; -webkit-user-select: none; user-select: none;
+            position: relative; z-index: 1;
         }
+        .diary-card.snap { transition: transform .3s cubic-bezier(.2,.8,.2,1); }
         .diary-info { min-width: 0; }
         .diary-info h4 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
         .diary-info p { font-size: 12px; color: var(--text-secondary); }
@@ -277,14 +280,14 @@
         .detail-time { font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; }
 
         .recent-title { font-size: 16px; font-weight: 700; margin: 8px 4px 10px; }
-        .swipe-row { position: relative; margin-bottom: 10px; border-radius: 20px; overflow: hidden; transition: height .28s cubic-bezier(.2,.8,.2,1), margin .28s cubic-bezier(.2,.8,.2,1), opacity .2s; }
+        .swipe-row { position: relative; margin-bottom: 10px; border-radius: 22px; overflow: hidden; transition: height .28s cubic-bezier(.2,.8,.2,1), margin .28s cubic-bezier(.2,.8,.2,1), opacity .2s; }
         .swipe-row.removing { opacity: 0; }
         .swipe-del {
             position: absolute; top: 0; right: 0; bottom: 0; width: 0; overflow: hidden;
             background: transparent; border: 0; padding: 0; font-family: inherit; cursor: pointer;
             -webkit-tap-highlight-color: transparent; border-radius: 20px;
         }
-        .swipe-del .sd-in { position: absolute; right: 18px; top: 50%; margin-top: -29px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .swipe-del .sd-in { position: absolute; right: 18px; top: 50%; margin-top: -29px; width: 40px; display: flex; flex-direction: column; align-items: stretch; gap: 4px; }
         .swipe-del .sd-btn {
             height: 40px; width: 40px; border-radius: 20px; background: #FF3B30; color: #fff;
             display: flex; align-items: center; justify-content: flex-start; padding-left: 10px; box-sizing: border-box;
@@ -292,27 +295,27 @@
         }
         .swipe-del .sd-btn svg { width: 20px; height: 20px; flex: none; transition: transform .2s cubic-bezier(.2,.8,.2,1); }
         .swipe-row.full .sd-btn svg { transform: scale(1.15); }
-        .swipe-del .sd-lbl { font-size: 11px; color: var(--text-secondary); align-self: center; width: 40px; text-align: center; white-space: nowrap; margin-right: 0; transition: opacity .15s; }
-        .swipe-row.wide .sd-lbl { opacity: 0; }
-        .swipe-row.go .swipe-del, .swipe-row.go .sd-btn { transition: width .26s cubic-bezier(.2,.8,.2,1); }
+        .swipe-del .sd-lbl { font-size: 11px; color: var(--text-secondary); text-align: center; white-space: nowrap; }
+                .swipe-row.go .swipe-del, .swipe-row.go .sd-btn, .swipe-row.go .sd-in { transition: width .26s cubic-bezier(.2,.8,.2,1); }
+        .swipe-row.go .sd-lbl { transition: opacity .2s; }
         .recent-item {
             display: flex; align-items: center; gap: 12px; cursor: pointer;
-            background: var(--card-bg); border-radius: 20px; padding: 10px 14px 10px 10px;
+            background: var(--card-bg); border-radius: 22px; padding: 14px 16px 14px 14px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.03);
             touch-action: pan-y; will-change: transform; -webkit-user-select: none; user-select: none;
             position: relative; z-index: 1;
         }
         .recent-item.snap { transition: transform .3s cubic-bezier(.2,.8,.2,1); }
         .recent-thumb {
-            width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0; overflow: hidden;
+            width: 58px; height: 58px; border-radius: 14px; flex-shrink: 0; overflow: hidden;
             background: #fff; border: 1px solid rgba(0,0,0,0.06);
             display: flex; align-items: center; justify-content: center; font-size: 22px;
         }
         .recent-thumb img { width: 100%; height: 100%; object-fit: contain; }
         .recent-info { flex: 1; min-width: 0; }
-        .recent-info h4 { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .recent-info p { font-size: 12px; color: var(--text-secondary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .recent-score { font-weight: 700; font-size: 14px; flex-shrink: 0; }
+        .recent-info h4 { font-size: 15.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .recent-info p { font-size: 13px; color: var(--text-secondary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .recent-score { font-weight: 700; font-size: 16px; flex-shrink: 0; }
         .recent-hint {
             background: var(--card-bg); border-radius: 20px; padding: 18px 16px; text-align: center;
             color: var(--text-secondary); font-size: 13px; line-height: 1.45;
@@ -671,8 +674,7 @@
 
         // ---------- Свайп для удаления (как в iOS) ----------
         const TRASH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/></svg>';
-        (function initSwipe() {
-            const box = document.getElementById('recent-section');
+        function initSwipe(box, onOpen, onDelete) {
             if (!box) return;
             const REVEAL = 76;
             let st = null, openRow = null, suppressClick = false;
@@ -686,8 +688,10 @@
                 const rv = Math.max(0, -x);
                 del.style.width = rv + 'px';
                 const pw = Math.max(40, rv - 36);
-                del.firstElementChild.firstElementChild.style.width = pw + 'px';
-                row.classList.toggle('wide', pw > 52);
+                const sdIn = del.firstElementChild;
+                sdIn.firstElementChild.style.width = pw + 'px';
+                sdIn.style.width = pw + 'px';
+                sdIn.lastElementChild.style.opacity = Math.max(0, 1 - (pw - 40) / 70).toFixed(2);
                 row._x = x;
             }
             function closeRow(row) {
@@ -703,14 +707,16 @@
                 void row.offsetHeight;
                 const it = row.firstElementChild.nextElementSibling;
                 it.classList.add('snap');
-                row.classList.add('go', 'full', 'wide');
+                row.classList.add('go', 'full');
                 it.style.transform = 'translate3d(' + (-row.offsetWidth) + 'px,0,0)';
                 row.firstElementChild.style.width = row.offsetWidth + 'px';
                 row.firstElementChild.firstElementChild.firstElementChild.style.width = (row.offsetWidth - 36) + 'px';
+                row.firstElementChild.firstElementChild.style.width = (row.offsetWidth - 36) + 'px';
+                row.firstElementChild.firstElementChild.lastElementChild.style.opacity = 0;
                 setTimeout(() => { row.classList.add('removing'); row.style.height = '0px'; row.style.marginBottom = '0px'; }, 200);
                 if (tg && tg.HapticFeedback) { try { tg.HapticFeedback.impactOccurred('medium'); } catch (e) {} }
                 if (openRow === row) openRow = null;
-                setTimeout(() => removeRecent(code), 520);
+                setTimeout(() => onDelete(code), 520);
             }
 
             box.addEventListener('pointerdown', e => {
@@ -759,12 +765,14 @@
                 const row = e.target.closest('.swipe-row');
                 if (!row) return;
                 if (openRow) { closeRow(openRow); return; }
-                openRecent(row.dataset.code);
+                onOpen(row.dataset.code);
             });
             document.addEventListener('pointerdown', e => {
-                if (openRow && !e.target.closest('#recent-section')) closeRow(openRow);
+                if (openRow && !box.contains(e.target)) closeRow(openRow);
             }, true);
-        })();
+        }
+        initSwipe(document.getElementById('recent-section'), openRecent, removeRecent);
+        initSwipe(document.getElementById('diary-container'), i => openDiaryDetail(+i), i => removeDiaryItem(+i));
 
         function esc(s) {
             return String(s == null ? '' : s)
@@ -1278,16 +1286,17 @@
                 container.innerHTML = `<div class="empty-state">Дневник пуст. Отсканируйте первый продукт!</div>`;
             } else {
                 container.innerHTML = diaryItems.map((item, idx) => ({ item, idx })).reverse().map(({ item, idx }) => `
-                    <div class="diary-card" onclick="openDiaryDetail(${idx})">
+                    <div class="swipe-row" data-code="${idx}">
+                    <button class="swipe-del" type="button" aria-label="Удалить"><span class="sd-in"><span class="sd-btn">${TRASH_SVG}</span><span class="sd-lbl">Удалить</span></span></button>
+                    <div class="diary-card">
                         <div class="diary-info">
                             <h4>${esc(item.name)}</h4>
                             <p>${esc(item.time)} • Сахар: ${item.sugar === null ? '—' : esc(item.sugar) + ' г'}, Белок: ${item.protein === null ? '—' : esc(item.protein) + ' г'}</p>
                         </div>
                         <div class="diary-right">
                             <div class="diary-badge" style="color: ${item.purity > 80 ? '#34C759' : (item.purity > 50 ? '#FF9500' : '#FF3B30')}">${esc(item.purity)}%</div>
-                            <button class="diary-del" onclick="event.stopPropagation(); removeDiaryItem(${idx})" aria-label="Удалить">✕</button>
                         </div>
-                    </div>
+                    </div></div>
                 `).join('');
             }
         }
