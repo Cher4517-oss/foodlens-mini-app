@@ -170,7 +170,7 @@
 
         /* Camera modal */
         #camera-modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; visibility: hidden; pointer-events: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; z-index: 1000; flex-direction: column; justify-content: flex-start; padding: 20px;
             height: 100dvh; overflow: hidden; overscroll-behavior: none;
             padding-top: calc(20px + var(--safe-top)); padding-bottom: calc(20px + var(--safe-bottom));
@@ -189,6 +189,7 @@
         }
         #camera-feed.ready { opacity: 1; }
         #camera-modal { justify-content: space-between; }
+        #camera-modal.open { visibility: visible; pointer-events: auto; }
         .camera-hint { flex: none; height: 28px; line-height: 18px; }
         .camera-msg { flex: none; height: 52px; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 0; line-height: 1.3; }
         .camera-controls { flex: none; }
@@ -302,7 +303,7 @@
         .detail-time { font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; }
 
         .recent-title { font-size: 16px; font-weight: 700; margin: 8px 4px 10px; }
-        .swipe-row { position: relative; margin-bottom: 10px; border-radius: 22px; overflow: hidden; transition: height .28s cubic-bezier(.2,.8,.2,1), margin .28s cubic-bezier(.2,.8,.2,1), opacity .2s; }
+        .swipe-row { position: relative; margin-bottom: 10px; border-radius: 22px; overflow: hidden; transition: opacity .2s; }
         .swipe-row.removing { opacity: 0; }
         .swipe-del {
             position: absolute; top: 0; right: 0; bottom: 0; width: 0; overflow: hidden;
@@ -679,10 +680,11 @@
             saveRecent();
             renderRecent();
         }
-        function removeRecent(barcode) {
+        function removeRecent(barcode, row) {
             recentItems = recentItems.filter(r => r.barcode !== barcode);
             saveRecent();
-            renderRecent();
+            if (row && row.parentNode && recentItems.length) row.remove();
+            else renderRecent();
         }
         function openRecent(barcode) {
             lookupBarcode(barcode).then(() => {
@@ -742,22 +744,33 @@
                 if (openRow === row) openRow = null;
             }
             function deleteRow(row) {
+                if (row._deleting) return;
+                row._deleting = true;
                 const code = row.dataset.code;
-                const h = row.offsetHeight;
-                row.style.height = h + 'px';
-                void row.offsetHeight;
+                const shift = row.offsetHeight + 10;
                 const it = row.firstElementChild.nextElementSibling;
                 it.classList.add('snap');
                 row.classList.add('go', 'full');
-                it.style.transform = 'translate3d(' + (-row.offsetWidth) + 'px,0,0)';
-                row.firstElementChild.style.width = row.offsetWidth + 'px';
-                row.firstElementChild.firstElementChild.firstElementChild.style.width = (row.offsetWidth - 36) + 'px';
-                row.firstElementChild.firstElementChild.style.width = (row.offsetWidth - 36) + 'px';
-                row.firstElementChild.firstElementChild.lastElementChild.style.opacity = 0;
-                setTimeout(() => { row.classList.add('removing'); row.style.height = '0px'; row.style.marginBottom = '0px'; }, 200);
+                const W = row.offsetWidth;
+                it.style.transform = 'translate3d(' + (-W) + 'px,0,0)';
+                const del = row.firstElementChild, inn = del.firstElementChild;
+                del.style.width = W + 'px';
+                inn.style.width = (W - 36) + 'px';
+                inn.firstElementChild.style.width = (W - 36) + 'px';
+                inn.lastElementChild.style.opacity = 0;
+                // Нижние строки поднимаются через transform (на GPU, без пересчёта вёрстки)
+                const after = [];
+                for (let n = row.nextElementSibling; n; n = n.nextElementSibling) after.push(n);
+                setTimeout(() => {
+                    row.classList.add('removing');
+                    after.forEach(n => { n.style.transition = 'transform .28s cubic-bezier(.2,.8,.2,1)'; n.style.transform = 'translate3d(0,' + (-shift) + 'px,0)'; });
+                }, 180);
                 if (tg && tg.HapticFeedback) { try { tg.HapticFeedback.impactOccurred('medium'); } catch (e) {} }
                 if (openRow === row) openRow = null;
-                setTimeout(() => onDelete(code), 520);
+                setTimeout(() => {
+                    after.forEach(n => { n.style.transition = 'none'; n.style.transform = ''; });
+                    onDelete(code, row);
+                }, 480);
             }
 
             box.addEventListener('pointerdown', e => {
@@ -813,7 +826,7 @@
             }, true);
         }
         initSwipe(document.getElementById('recent-section'), openRecent, removeRecent);
-        initSwipe(document.getElementById('diary-container'), i => openDiaryDetail(+i), i => removeDiaryItem(+i));
+        initSwipe(document.getElementById('diary-container'), i => openDiaryDetail(+i), (i, row) => removeDiaryItem(+i, row));
 
         function esc(s) {
             return String(s == null ? '' : s)
@@ -1293,15 +1306,25 @@
             document.getElementById('detail-modal').style.display = 'none';
         }
 
-        function removeDiaryItem(index) {
+        function removeDiaryItem(index, row) {
             diaryItems.splice(index, 1);
             saveDiary();
-            updateUI();
+            if (row && row.parentNode && diaryItems.length) {
+                const box = row.parentNode;
+                row.remove();
+                // индексы оставшихся строк сдвигаются
+                box.querySelectorAll('.swipe-row').forEach(r => { const i = +r.dataset.code; if (i > index) r.dataset.code = i - 1; });
+                updateTiles();
+            } else updateUI();
         }
 
         // ---------- Интерфейс ----------
         function updateUI() {
             renderRecent();
+            updateTiles();
+            renderDiary();
+        }
+        function updateTiles() {
             const todayItems = diaryItems.filter(i => i.ts && isToday(i.ts));
 
             if (todayItems.length > 0) {
@@ -1322,6 +1345,8 @@
                 });
             }
 
+        }
+        function renderDiary() {
             const container = document.getElementById('diary-container');
             if (diaryItems.length === 0) {
                 container.innerHTML = `<div class="empty-state">Дневник пуст. Отсканируйте первый продукт!</div>`;
@@ -1663,7 +1688,7 @@
 
         function scanMsg(text, isError) {
             document.getElementById('camera-msg').textContent = text || '';
-            if (document.getElementById('camera-modal').style.display !== 'flex') {
+            if (!document.getElementById('camera-modal').classList.contains('open')) {
                 showStatus(text || '', !!isError);
             }
         }
@@ -1683,19 +1708,26 @@
             lookupBarcode(code);
         }
 
+        let camIdle = null;
+        const camLive = () => !!(mediaStream && mediaStream.getVideoTracks().some(t => t.readyState === 'live'));
+        function releaseCamera() {
+            clearTimeout(camIdle);
+            if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+            const v = document.getElementById('camera-feed');
+            v.srcObject = null; v.classList.remove('ready');
+            setTorchUI(false);
+        }
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && !document.getElementById('camera-modal').classList.contains('open')) releaseCamera();
+        });
+
         async function openCameraScanner() {
             haptic('impact', 'medium');
             scanned = false;
+            clearTimeout(camIdle);
             const modal = document.getElementById('camera-modal');
             const video = document.getElementById('camera-feed');
-            modal.style.display = 'flex';
-            scanMsg('Запускаю камеру…');
-
-            ensureZXing().catch(() => {
-                if (!('BarcodeDetector' in window)) {
-                    scanMsg('Не загрузилась библиотека распознавания. Проверьте интернет', true);
-                }
-            });
+            modal.classList.add('open');
 
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 scanMsg('Живая камера недоступна. Нажмите «Сфотографировать»: откроется камера телефона', true);
@@ -1703,35 +1735,41 @@
             }
 
             try {
-                mediaStream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: { ideal: 'environment' },
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
-                    },
-                    audio: false
-                });
-                video.srcObject = mediaStream;
-                await video.play().catch(() => {});
-                await new Promise(res => {
-                    let done = false; const fin = () => { if (!done) { done = true; res(); } };
-                    if (video.requestVideoFrameCallback) video.requestVideoFrameCallback(() => setTimeout(fin, 150));
-                    else video.addEventListener('playing', () => setTimeout(fin, 250), { once: true });
-                    setTimeout(fin, 1500);
-                });
-                video.classList.add('ready');
+                if (camLive()) {
+                    // Камера уже работает с прошлого раза: разрешение не спрашиваем, картинка сразу
+                    if (video.srcObject !== mediaStream) video.srcObject = mediaStream;
+                    video.play().catch(() => {});
+                    video.classList.add('ready');
+                } else {
+                    scanMsg('Запускаю камеру…');
+                    mediaStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+                        audio: false
+                    });
+                    if (!modal.classList.contains('open')) { releaseCamera(); return; }
+                    video.srcObject = mediaStream;
+                    video.play().catch(() => {});
+                    await new Promise(res => {
+                        let done = false; const fin = () => { if (!done) { done = true; res(); } };
+                        if (video.requestVideoFrameCallback) video.requestVideoFrameCallback(() => setTimeout(fin, 250));
+                        else video.addEventListener('playing', () => setTimeout(fin, 350), { once: true });
+                        setTimeout(fin, 1200);
+                    });
+                    video.classList.add('ready');
+                    try { mediaStream.getVideoTracks()[0].applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {}); } catch (e) {}
+                }
+                if (!modal.classList.contains('open')) return;
 
-                try {
-                    const track = mediaStream.getVideoTracks()[0];
-                    await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
-                } catch (e) {}
-
-                if ('BarcodeDetector' in window) {
+                ensureZXing().catch(() => {
+                    if (!('BarcodeDetector' in window)) {
+                        scanMsg('Не загрузилась библиотека распознавания. Проверьте интернет', true);
+                    }
+                });
+                if (!detector && 'BarcodeDetector' in window) {
                     try {
                         detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'] });
                     } catch (e) { detector = null; }
                 }
-
                 try {
                     const caps = mediaStream.getVideoTracks()[0].getCapabilities();
                     document.getElementById('btn-flash').classList.toggle('off-na', !('torch' in caps));
@@ -1854,16 +1892,16 @@
         }
 
         function closeCameraScanner() {
-            setTorchUI(false);
             scanLoopActive = false;
-            document.getElementById('camera-modal').style.display = 'none';
-            if (mediaStream) {
-                mediaStream.getTracks().forEach(t => t.stop());
-                mediaStream = null;
+            if (torchOn) {
+                try { mediaStream.getVideoTracks()[0].applyConstraints({ advanced: [{ torch: false }] }).catch(() => {}); } catch (e) {}
+                setTorchUI(false);
             }
-            document.getElementById('camera-feed').srcObject = null;
-            document.getElementById('camera-feed').classList.remove('ready');
+            document.getElementById('camera-modal').classList.remove('open');
             document.getElementById('camera-msg').textContent = '';
+            // Камеру держим ещё минуту: повторное открытие мгновенное и без нового запроса разрешения
+            clearTimeout(camIdle);
+            camIdle = setTimeout(releaseCamera, 60000);
             healNav();
         }
 
