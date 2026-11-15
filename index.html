@@ -2080,6 +2080,28 @@
 
         let camIdle = null;
         let camAcquiring = null;
+        // iOS: сразу после первого кадра картинка ещё «узкая» (рамка и object-fit обновляются с задержкой).
+        // Ждём несколько показанных кадров с неизменным размером и заново применяем object-fit, только потом показываем окно.
+        function settleVideo(video) {
+            return new Promise(res => {
+                const t0 = performance.now();
+                let frames = 0, lastW = video.videoWidth, lastH = video.videoHeight, stable = 0, done = false;
+                const fin = () => {
+                    if (done) return; done = true;
+                    video.style.objectFit = 'contain'; void video.offsetWidth; video.style.objectFit = '';
+                    requestAnimationFrame(() => requestAnimationFrame(res));
+                };
+                const tick = () => {
+                    if (done) return;
+                    frames++;
+                    if (video.videoWidth === lastW && video.videoHeight === lastH) stable++; else { stable = 0; lastW = video.videoWidth; lastH = video.videoHeight; }
+                    if (frames >= 4 && stable >= 3 && performance.now() - t0 >= 220) fin(); else arm();
+                };
+                const arm = () => { if (video.requestVideoFrameCallback) video.requestVideoFrameCallback(tick); else setTimeout(tick, 60); };
+                arm();
+                setTimeout(fin, 1100);
+            });
+        }
         function waitForFrame(video, ms) {
             return new Promise(res => {
                 let done = false;
@@ -2170,6 +2192,8 @@
                         ok = await waitForFrame(video, 3000);
                     }
                     if (!ok) { scanMsg('Нет доступа к камере. Нажмите «Сфотографировать», чтобы снять через камеру телефона', true); return; }
+                    await settleVideo(video);
+                    if (!modal.classList.contains('open')) return;
                     video.classList.add('ready');
                 }
                 if (!warm) { try { mediaStream.getVideoTracks()[0].applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {}); } catch (e) {} }
@@ -2316,7 +2340,7 @@
             document.getElementById('camera-msg').textContent = '';
             // Камеру держим ещё минуту: повторное открытие мгновенное и без нового запроса разрешения
             clearTimeout(camIdle);
-            camIdle = setTimeout(releaseCamera, 60000);
+            camIdle = setTimeout(releaseCamera, LITE ? 240000 : 60000);
             healNav();
         }
 
