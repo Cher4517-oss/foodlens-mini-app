@@ -230,16 +230,17 @@
             object-fit: cover; border-radius: 24px; opacity: 0; transition: opacity .3s;
         }
         /* Переливающееся свечение за окном камеры */
-        .cam-glow { position: absolute; inset: -8px; border-radius: 44px; overflow: hidden; z-index: 0; filter: blur(8px); opacity: .85; animation: camBreath 4s ease-in-out infinite; }
+        .cam-glow-in { position: absolute; inset: 0; border-radius: 44px; overflow: hidden; -webkit-clip-path: inset(0 round 44px); clip-path: inset(0 round 44px); transform: translateZ(0); }
+        .cam-glow { position: absolute; inset: -8px; border-radius: 44px; z-index: 0; filter: blur(8px); opacity: .85; animation: camBreath 4s ease-in-out infinite; }
         .cam-plate { position: absolute; inset: 0; z-index: 2; background: #000; border-radius: 24px; }
-        .cam-rim { position: absolute; inset: -2px; border-radius: 26px; overflow: hidden; z-index: 1; }
-        .cam-glow::before, .cam-rim::before {
+        .cam-rim { position: absolute; inset: -2px; border-radius: 26px; overflow: hidden; -webkit-clip-path: inset(0 round 26px); clip-path: inset(0 round 26px); z-index: 1; }
+        .cam-glow-in::before, .cam-rim::before {
             content: ''; position: absolute; left: 50%; top: 50%; width: 220%; aspect-ratio: 1; margin: 0;
             transform: translate(-50%, -50%) rotate(0deg); will-change: transform;
             background: conic-gradient(from 0deg, #ffe14d, #ff4fb8, #8f5bff, #3ea6ff, #7ff0ff, #ffe14d 45%, #ff7a3d 60%, #ff4fb8 75%, #8f5bff 88%, #ffe14d);
             animation: camSpin 7s linear infinite;
         }
-        .cam-glow::after {
+        .cam-glow-in::after {
             content: ''; position: absolute; left: 50%; top: 50%; width: 200%; aspect-ratio: 1;
             transform: translate(-50%, -50%) rotate(0deg); will-change: transform; mix-blend-mode: screen; opacity: .55;
             background: conic-gradient(from 90deg, #3ea6ff, transparent 25%, #ff4fb8 50%, transparent 75%, #3ea6ff);
@@ -247,11 +248,11 @@
         }
         @keyframes camSpin { to { transform: translate(-50%, -50%) rotate(360deg); } }
         @keyframes camBreath { 0%, 100% { opacity: .6; } 50% { opacity: .95; } }
-        #camera-modal:not(.open) .cam-glow, #camera-modal:not(.open) .cam-glow::before, #camera-modal:not(.open) .cam-glow::after, #camera-modal:not(.open) .cam-rim::before { animation-play-state: paused; }
+        #camera-modal:not(.open) .cam-glow, #camera-modal:not(.open) .cam-glow-in::before, #camera-modal:not(.open) .cam-glow-in::after, #camera-modal:not(.open) .cam-rim::before { animation-play-state: paused; }
         .lite .cam-glow { filter: blur(6px); animation: none; opacity: .75; }
-        .lite .cam-glow::after { display: none; }
-        .lite .cam-glow::before, .lite .cam-rim::before { animation-duration: 10s; }
-        @media (prefers-reduced-motion: reduce) { .cam-glow, .cam-glow::before, .cam-glow::after, .cam-rim::before { animation: none; } }
+        .lite .cam-glow-in::after { display: none; }
+        .lite .cam-glow-in::before, .lite .cam-rim::before { animation-duration: 10s; }
+        @media (prefers-reduced-motion: reduce) { .cam-glow, .cam-glow-in::before, .cam-glow-in::after, .cam-rim::before { animation: none; } }
         #camera-feed.ready { opacity: 1; }
         #camera-modal { justify-content: space-between; }
         #camera-modal.open { visibility: visible; pointer-events: auto; }
@@ -595,7 +596,7 @@
     <div id="camera-modal">
         <div class="camera-hint">Наведите камеру на штрихкод</div>
         <div class="cam-wrap">
-            <div class="cam-glow" aria-hidden="true"></div>
+            <div class="cam-glow" aria-hidden="true"><div class="cam-glow-in"></div></div>
             <div class="cam-rim" aria-hidden="true"></div>
             <div class="cam-plate" aria-hidden="true"></div>
             <video id="camera-feed" autoplay playsinline muted></video>
@@ -2095,7 +2096,7 @@
                     if (done) return;
                     frames++;
                     if (video.videoWidth === lastW && video.videoHeight === lastH) stable++; else { stable = 0; lastW = video.videoWidth; lastH = video.videoHeight; }
-                    if (frames >= 4 && stable >= 3 && performance.now() - t0 >= 220) fin(); else arm();
+                    if (frames >= 3 && stable >= 2 && performance.now() - t0 >= 120) fin(); else arm();
                 };
                 const arm = () => { if (video.requestVideoFrameCallback) video.requestVideoFrameCallback(tick); else setTimeout(tick, 60); };
                 arm();
@@ -2129,8 +2130,12 @@
         function warmCamera() {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || camLive() || camAcquiring) return;
             acquireCamera().then(() => {
+                try { localStorage.setItem('camOk', '1'); } catch (e) {}
                 if (!document.getElementById('camera-modal').classList.contains('open')) {
-                    clearTimeout(camIdle); camIdle = setTimeout(releaseCamera, 20000);
+                    // Кадры начинают идти заранее, пока окно ещё скрыто — к нажатию «Сканировать» всё уже готово
+                    const v = document.getElementById('camera-feed');
+                    if (mediaStream && v.srcObject !== mediaStream) { v.srcObject = mediaStream; v.play().catch(() => {}); }
+                    clearTimeout(camIdle); camIdle = setTimeout(releaseCamera, 45000);
                 }
             }).catch(() => {});
         }
@@ -2145,6 +2150,8 @@
         } catch (e) {}
         // Библиотеку распознавания тоже грузим заранее, пока пользователь на главной
         setTimeout(() => { try { ensureZXing().catch(() => {}); } catch (e) {} }, 1500);
+        // iOS не всегда отдаёт состояние разрешения: если камера уже работала раньше, прогреваем сразу при запуске
+        setTimeout(() => { try { if (localStorage.getItem('camOk') === '1') warmCamera(); } catch (e) {} }, 400);
         const camLive = () => !!(mediaStream && mediaStream.getVideoTracks().some(t => t.readyState === 'live'));
         function releaseCamera() {
             clearTimeout(camIdle);
