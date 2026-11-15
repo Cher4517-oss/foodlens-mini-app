@@ -901,10 +901,34 @@
         function pushRecent(p) {
             if (!p || !p.barcode) return;
             recentItems = recentItems.filter(r => r.barcode !== p.barcode);
-            recentItems.unshift({ barcode: p.barcode, name: p.name, brand: p.brand || '', image: (p.image && p.image.length < 20000) ? p.image : '', purity: p.purity });
+            const small = p.image && p.image.length < 20000;
+            recentItems.unshift({ barcode: p.barcode, name: p.name, brand: p.brand || '', image: small ? p.image : '', purity: p.purity });
             recentItems = recentItems.slice(0, 5);
             saveRecent();
             renderRecent();
+            // Большое фото (своё или чужое из общей базы) уменьшаем до миниатюры, чтобы не раздувать память
+            if (p.image && !small && /^data:image/.test(p.image)) {
+                makeThumb(p.image).then(t => {
+                    const r = recentItems.find(x => x.barcode === p.barcode);
+                    if (r && t) { r.image = t; saveRecent(); renderRecent(); }
+                });
+            }
+        }
+        function makeThumb(src) {
+            return new Promise(res => {
+                const im = new Image();
+                im.onload = () => {
+                    try {
+                        const k = 110 / Math.max(im.width, im.height, 1);
+                        const w = Math.max(1, Math.round(im.width * Math.min(1, k))), h = Math.max(1, Math.round(im.height * Math.min(1, k)));
+                        const c = document.createElement('canvas'); c.width = w; c.height = h;
+                        c.getContext('2d').drawImage(im, 0, 0, w, h);
+                        res(c.toDataURL('image/jpeg', 0.72));
+                    } catch (e) { res(''); }
+                };
+                im.onerror = () => res('');
+                im.src = src;
+            });
         }
         function removeRecent(barcode, row) {
             recentItems = recentItems.filter(r => r.barcode !== barcode);
@@ -926,8 +950,9 @@
                 return;
             }
             box.innerHTML = '<div class="recent-title">Недавно искали</div>' + recentItems.map(r => {
-                const thumb = r.image
-                    ? '<img alt="" src="' + esc(r.image) + '" onerror="this.outerHTML=\'🛒\'">'
+                const timg = r.image || ((customItems[r.barcode] && customItems[r.barcode].image) || '');
+                const thumb = timg
+                    ? '<img alt="" src="' + esc(timg) + '" onerror="this.outerHTML=\'🛒\'">'
                     : '🛒';
                 const color = r.purity > 80 ? '#34C759' : (r.purity > 50 ? '#FF9500' : '#FF3B30');
                 return '<div class="swipe-row" data-code="' + esc(r.barcode) + '">' +
@@ -1477,6 +1502,7 @@
                 sharedDelete(code).then(ok => { if (!ok) { const a = loadPendingDel(); if (a.indexOf(code) < 0) a.push(code); savePendingDel(a); } });
             }
             closeAddForm();
+            closeDiaryDetail();
             dismissResult();
             haptic('notify', 'success');
             showStatus(SHARED_ON ? 'Продукт удалён из общей базы' : 'Продукт удалён из вашей базы', false);
@@ -1522,6 +1548,7 @@
             const color = p.purity > 80 ? '#34C759' : (p.purity > 50 ? '#FF9500' : '#FF3B30');
             const nova = p.nova ? p.nova + ' из 4' : 'нет данных';
             const ns = (p.nutriscore && /^[A-E]$/.test(p.nutriscore)) ? p.nutriscore : 'нет данных';
+            const own = !!(p.barcode && customItems[p.barcode]);
             document.getElementById('detail-body').innerHTML = `
                 <div class="detail-card">
                     <div class="detail-time">Добавлено в ${esc(p.time || '—')}</div>
@@ -1544,10 +1571,12 @@
                         <div class="result-cell"><span><i class="ic-recycle"></i>NOVA (переработка)</span><b>${nova}</b></div>
                         <div class="result-cell"><span>${ico('score')}Nutri-Score</span><b>${ns}</b></div>
                     </div>
+                    ${own ? `<button class="btn-photo" style="margin-top:0;margin-bottom:10px" onclick="closeDiaryDetail(); openAddForm('${esc(p.barcode)}', true)">Изменить данные</button>` : ''}
                     <div class="result-actions">
                         <button class="btn-dismiss" onclick="closeDiaryDetail()">Закрыть</button>
                     </div>
                     <div class="result-note">Данные на момент добавления в дневник. Чтобы обновить их, отсканируйте продукт ещё раз.</div>
+                    ${own ? `<button class="btn-del-big" onclick="deleteCustomByCode('${esc(p.barcode)}')">${ico('trash')}Удалить из базы</button>` : ''}
                 </div>
             `;
             const modal = document.getElementById('detail-modal');
