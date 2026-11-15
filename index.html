@@ -15,9 +15,33 @@
             --accent-orange: #FF9500;
             --accent-pink: #FF2D55;
             --font-led: 'Courier New', Courier, monospace;
+            --field-bg: #fff;
+            --fill-1: rgba(0, 0, 0, 0.04);
+            --fill-2: rgba(0, 0, 0, 0.06);
+            --line: rgba(0, 0, 0, 0.1);
+            --icon: #3A3A3C;
+            color-scheme: light;
             --safe-top: calc(var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px));
             --safe-bottom: var(--tg-safe-area-inset-bottom, 0px);
         }
+
+        html.dark {
+            --bg-color: #000000;
+            --card-bg: rgba(28, 28, 30, 0.92);
+            --text-main: #F2F2F7;
+            --text-secondary: #98989F;
+            --field-bg: #2C2C2E;
+            --fill-1: rgba(255, 255, 255, 0.08);
+            --fill-2: rgba(255, 255, 255, 0.12);
+            --line: rgba(255, 255, 255, 0.16);
+            --icon: #D1D1D6;
+            color-scheme: dark;
+        }
+        html.dark .mesh-green { background: linear-gradient(135deg, rgba(52, 199, 89, 0.22), rgba(0, 122, 255, 0.08)); }
+        html.dark .mesh-orange { background: linear-gradient(135deg, rgba(255, 149, 0, 0.22), rgba(255, 45, 85, 0.08)); }
+        html.dark .mesh-pink { background: linear-gradient(135deg, rgba(255, 45, 85, 0.22), rgba(175, 82, 222, 0.08)); }
+        html.dark .scanner-info { background: linear-gradient(135deg, #2C2C2E, #3A3A3C); }
+        html.dark .bento-card, html.dark .recent-item, html.dark .diary-card, html.dark .trend-capsule, html.dark .manual-card, html.dark .detail-card, html.dark .result-card { box-shadow: none; }
 
         * {
             box-sizing: border-box;
@@ -48,7 +72,7 @@
 
         .user-badge {
             display: flex; align-items: center; gap: 8px;
-            background: rgba(0, 0, 0, 0.04);
+            background: var(--fill-1);
             padding: 6px 12px; border-radius: 20px;
             font-size: 13px; font-weight: 500;
         }
@@ -84,7 +108,7 @@
         .trend-header { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--text-secondary); }
         .trend-status { font-weight: 600; color: var(--text-main); text-align: right; }
 
-        .progress-bar-bg { width: 100%; height: 6px; background: rgba(0, 0, 0, 0.06); border-radius: 3px; overflow: hidden; }
+        .progress-bar-bg { width: 100%; height: 6px; background: var(--fill-2); border-radius: 3px; overflow: hidden; }
         .progress-bar-fill {
             width: 0%; height: 100%;
             background: linear-gradient(90deg, #34C759, #007AFF);
@@ -132,7 +156,7 @@
         .manual-row { display: flex; gap: 8px; }
         .manual-row input {
             flex: 1; min-width: 0; padding: 13px 14px; font-size: 17px;
-            border: 1px solid rgba(0,0,0,0.1); border-radius: 14px; background: #fff; outline: none;
+            border: 1px solid var(--line); border-radius: 14px; background: var(--field-bg); outline: none;
         }
         .manual-row button {
             padding: 13px 20px; border: none; border-radius: 14px;
@@ -148,14 +172,14 @@
         .result-top { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
         .result-img {
             width: 72px; height: 72px; border-radius: 14px; object-fit: contain;
-            background: #fff; border: 1px solid rgba(0,0,0,0.06); flex-shrink: 0;
+            background: var(--field-bg); border: 1px solid var(--fill-2); flex-shrink: 0;
         }
         .result-img.placeholder { display: flex; align-items: center; justify-content: center; font-size: 28px; }
         .result-name { font-size: 16px; font-weight: 700; line-height: 1.25; }
         .result-brand { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
         .result-code { font-size: 11px; color: var(--text-secondary); margin-top: 2px; font-family: var(--font-led); }
         .result-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
-        .result-cell { background: rgba(0,0,0,0.04); border-radius: 12px; padding: 8px 10px; }
+        .result-cell { background: var(--fill-1); border-radius: 12px; padding: 8px 10px; }
         .result-cell span { display: block; font-size: 11px; color: var(--text-secondary); }
         .result-cell b { font-size: 15px; }
         .result-actions { display: flex; gap: 8px; }
@@ -163,7 +187,7 @@
             flex: 1; padding: 12px; border: none; border-radius: 12px; font-weight: 600; font-size: 14px; cursor: pointer;
         }
         .btn-add { background: #34C759; color: #fff; }
-        .btn-dismiss { background: rgba(0,0,0,0.06); color: var(--text-main); }
+        .btn-dismiss { background: var(--fill-2); color: var(--text-main); }
         .result-note { font-size: 11px; color: var(--text-secondary); margin-top: 10px; line-height: 1.4; }
 
         #status-msg {
@@ -193,9 +217,9 @@
             object-fit: cover; border-radius: 24px; opacity: 0; transition: opacity .3s;
         }
         /* Переливающееся свечение за окном камеры */
-        .cam-glow { position: absolute; inset: -18px; border-radius: 40px; overflow: hidden; z-index: 0; filter: blur(16px); opacity: .85; animation: camBreath 4s ease-in-out infinite; }
+        .cam-glow { position: absolute; inset: -8px; border-radius: 32px; overflow: hidden; z-index: 0; filter: blur(8px); opacity: .85; animation: camBreath 4s ease-in-out infinite; }
         .cam-plate { position: absolute; inset: 0; z-index: 2; background: #000; border-radius: 24px; }
-        .cam-rim { position: absolute; inset: -3px; border-radius: 27px; overflow: hidden; z-index: 1; }
+        .cam-rim { position: absolute; inset: -2px; border-radius: 26px; overflow: hidden; z-index: 1; }
         .cam-glow::before, .cam-rim::before {
             content: ''; position: absolute; left: 50%; top: 50%; width: 220%; aspect-ratio: 1; margin: 0;
             transform: translate(-50%, -50%) rotate(0deg); will-change: transform;
@@ -211,7 +235,7 @@
         @keyframes camSpin { to { transform: translate(-50%, -50%) rotate(360deg); } }
         @keyframes camBreath { 0%, 100% { opacity: .6; } 50% { opacity: .95; } }
         #camera-modal:not(.open) .cam-glow, #camera-modal:not(.open) .cam-glow::before, #camera-modal:not(.open) .cam-glow::after, #camera-modal:not(.open) .cam-rim::before { animation-play-state: paused; }
-        .lite .cam-glow { filter: blur(9px); animation: none; opacity: .75; }
+        .lite .cam-glow { filter: blur(6px); animation: none; opacity: .75; }
         .lite .cam-glow::after { display: none; }
         .lite .cam-glow::before, .lite .cam-rim::before { animation-duration: 10s; }
         @media (prefers-reduced-motion: reduce) { .cam-glow, .cam-glow::before, .cam-glow::after, .cam-rim::before { animation: none; } }
@@ -253,12 +277,12 @@
         .camera-controls .btn-shot { flex: none; padding: 19px 18px; font-size: 15px; white-space: nowrap; }
         .btn-photo {
             width: 100%; margin-top: 10px; padding: 12px; border: none; border-radius: 12px;
-            background: rgba(0,0,0,0.06); color: var(--text-main); font-weight: 600; font-size: 14px; cursor: pointer;
+            background: var(--fill-2); color: var(--text-main); font-weight: 600; font-size: 14px; cursor: pointer;
         }
 
         .ic {
             width: 15px; height: 15px; vertical-align: -3px; margin-right: 5px; flex-shrink: 0;
-            fill: none; stroke: #3A3A3C; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round;
+            fill: none; stroke: var(--icon); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round;
         }
         .bento-label .ic { width: 17px; height: 17px; vertical-align: -4px; }
         .app-logo { display: flex; align-items: center; gap: 8px; }
@@ -281,7 +305,7 @@
         .photo-btns { flex: 1; display: flex; flex-direction: column; gap: 8px; }
         .photo-btns button {
             padding: 11px; border: none; border-radius: 12px; font-weight: 600; font-size: 14px; cursor: pointer;
-            background: rgba(0,0,0,0.06); color: var(--text-main);
+            background: var(--fill-2); color: var(--text-main);
         }
         .photo-btns .btn-photo-del { color: #FF3B30; }
         .btn-addprod {
@@ -301,7 +325,7 @@
         .add-field label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
         .add-field input, .add-field select {
             width: 100%; padding: 12px 14px; font-size: 16px;
-            border: 1px solid rgba(0,0,0,0.1); border-radius: 12px; background: #fff; outline: none;
+            border: 1px solid var(--line); border-radius: 12px; background: var(--field-bg); outline: none;
         }
         .add-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .add-err { color: #FF3B30; font-size: 13px; margin: 6px 0; }
@@ -366,7 +390,7 @@
         .recent-item.snap { transition: transform .3s cubic-bezier(.2,.8,.2,1); }
         .recent-thumb {
             width: 58px; height: 58px; border-radius: 14px; flex-shrink: 0; overflow: hidden;
-            background: #fff; border: 1px solid rgba(0,0,0,0.06);
+            background: var(--field-bg); border: 1px solid var(--fill-2);
             display: flex; align-items: center; justify-content: center; font-size: 22px;
         }
         .recent-thumb img { width: 100%; height: 100%; object-fit: contain; }
@@ -455,6 +479,27 @@
             fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
         }
     </style>
+    <script>
+        // Тема как в Telegram: тёмная/светлая, обновляется на лету
+        (function () {
+            const w = window.Telegram && window.Telegram.WebApp;
+            const mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+            function isDark() {
+                if (w && w.colorScheme) return w.colorScheme === 'dark';
+                return !!(mq && mq.matches);
+            }
+            window.applyTheme = function () {
+                const d = isDark();
+                document.documentElement.classList.toggle('dark', d);
+                const c = d ? '#000000' : '#F6F7F9';
+                try { if (w) { w.setHeaderColor(c); w.setBackgroundColor(c); if (w.setBottomBarColor) w.setBottomBarColor(c); } } catch (e) {}
+                try { let m = document.querySelector('meta[name=theme-color]'); if (!m) { m = document.createElement('meta'); m.name = 'theme-color'; document.head.appendChild(m); } m.content = c; } catch (e) {}
+            };
+            window.applyTheme();
+            try { if (w && w.onEvent) w.onEvent('themeChanged', window.applyTheme); } catch (e) {}
+            try { if (mq) (mq.addEventListener ? mq.addEventListener('change', window.applyTheme) : mq.addListener(window.applyTheme)); } catch (e) {}
+        })();
+    </script>
 </head>
 <body>
 
@@ -517,7 +562,7 @@
     </div>
 
     <nav class="bottom-nav">
-        <div class="nav-scan" onclick="openCameraScanner()">
+        <div class="nav-scan" onclick="openCameraScanner()" onpointerdown="warmCamera()">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.500A2.500 2.500 0 0 1 6.500 6H8l1.200-2h5.600L16 6h1.500A2.500 2.500 0 0 1 20 8.500v8A2.500 2.500 0 0 1 17.500 19h-11A2.500 2.500 0 0 1 4 16.500z"/><circle cx="12" cy="12.500" r="3.300"/></svg>
             Сканировать
         </div>
@@ -618,7 +663,7 @@
 
             <div class="add-err" id="add-err"></div>
             <div class="add-actions">
-                <button style="background: rgba(0,0,0,0.06); color: var(--text-main)" onclick="closeAddForm()">Отмена</button>
+                <button style="background: var(--fill-2); color: var(--text-main)" onclick="closeAddForm()">Отмена</button>
                 <button style="background: #34C759; color: #fff" onclick="saveCustomProduct()">Сохранить</button>
             </div>
             <button class="btn-del" id="add-del" style="display:none" onclick="deleteCustomProduct()">Удалить из базы</button>
@@ -653,10 +698,7 @@
                     tg.requestFullscreen();
                 }
             } catch (e) {}
-            try {
-                tg.setHeaderColor('#F6F7F9');
-                tg.setBackgroundColor('#F6F7F9');
-            } catch (e) {}
+            try { window.applyTheme && window.applyTheme(); } catch (e) {}
             const u = tg.initDataUnsafe && tg.initDataUnsafe.user;
             if (u && u.first_name) {
                 document.getElementById('user-name').textContent = u.first_name;
@@ -2020,6 +2062,37 @@
         }
 
         let camIdle = null;
+        let camAcquiring = null;
+        // Один общий запрос камеры: его можно начать заранее (прогрев) и подхватить при открытии окна
+        function acquireCamera() {
+            if (camLive()) return Promise.resolve(mediaStream);
+            if (!camAcquiring) {
+                camAcquiring = navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+                    audio: false
+                }).then(st => { mediaStream = st; return st; }).finally(() => { camAcquiring = null; });
+            }
+            return camAcquiring;
+        }
+        function warmCamera() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || camLive() || camAcquiring) return;
+            acquireCamera().then(() => {
+                if (!document.getElementById('camera-modal').classList.contains('open')) {
+                    clearTimeout(camIdle); camIdle = setTimeout(releaseCamera, 20000);
+                }
+            }).catch(() => {});
+        }
+        // Прогрев: сразу при старте, если разрешение уже выдано; и в момент касания кнопки «Сканировать»
+        try {
+            if (navigator.permissions && navigator.permissions.query) {
+                navigator.permissions.query({ name: 'camera' }).then(r => {
+                    if (r.state === 'granted') warmCamera();
+                    window.__camPerm = r;
+                }).catch(() => {});
+            }
+        } catch (e) {}
+        // Библиотеку распознавания тоже грузим заранее, пока пользователь на главной
+        setTimeout(() => { try { ensureZXing().catch(() => {}); } catch (e) {} }, 1500);
         const camLive = () => !!(mediaStream && mediaStream.getVideoTracks().some(t => t.readyState === 'live'));
         function releaseCamera() {
             clearTimeout(camIdle);
@@ -2046,29 +2119,23 @@
             }
 
             try {
-                if (camLive()) {
-                    // Камера уже работает с прошлого раза: разрешение не спрашиваем, картинка сразу
-                    if (video.srcObject !== mediaStream) video.srcObject = mediaStream;
-                    video.play().catch(() => {});
-                    video.classList.add('ready');
-                } else {
-                    scanMsg('Запускаю камеру…');
-                    mediaStream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
-                        audio: false
-                    });
-                    if (!modal.classList.contains('open')) { releaseCamera(); return; }
-                    video.srcObject = mediaStream;
-                    video.play().catch(() => {});
+                const warm = camLive();
+                if (!warm) scanMsg('Запускаю камеру…');
+                await acquireCamera();
+                if (!modal.classList.contains('open')) { releaseCamera(); return; }
+                if (video.srcObject !== mediaStream) video.srcObject = mediaStream;
+                video.play().catch(() => {});
+                if (!video.classList.contains('ready')) {
                     await new Promise(res => {
                         let done = false; const fin = () => { if (!done) { done = true; res(); } };
-                        if (video.requestVideoFrameCallback) video.requestVideoFrameCallback(() => setTimeout(fin, 250));
-                        else video.addEventListener('playing', () => setTimeout(fin, 350), { once: true });
+                        if (video.readyState >= 2 && video.videoWidth) fin();
+                        else if (video.requestVideoFrameCallback) video.requestVideoFrameCallback(() => setTimeout(fin, 60));
+                        else video.addEventListener('playing', () => setTimeout(fin, 200), { once: true });
                         setTimeout(fin, 1200);
                     });
                     video.classList.add('ready');
-                    try { mediaStream.getVideoTracks()[0].applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {}); } catch (e) {}
                 }
+                if (!warm) { try { mediaStream.getVideoTracks()[0].applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {}); } catch (e) {} }
                 if (!modal.classList.contains('open')) return;
 
                 ensureZXing().catch(() => {
