@@ -777,14 +777,16 @@
         // ---------- Общая база продуктов (Supabase) ----------
         // Чтобы продукты, добавленные одним человеком, видели все, впишите адрес и ключ проекта Supabase.
         // Пока поля пустые, продукты хранятся только на устройстве.
-        const SHARED_DB = { url: '', key: '' };
+        const SHARED_DB = { url: 'https://fibdtlfljjjpwjmpsmks.supabase.co', key: 'sb_publishable_l10oggqmbh_2SEEJYf0jCg_D55W1oaN' };
         const SHARED_ON = !!(SHARED_DB.url && SHARED_DB.key);
         if (SHARED_ON) { const an = document.querySelector('.add-note'); if (an) an.textContent = 'Продукт сохранится и будет доступен всем пользователям при сканировании этого штрихкода. Полезность продукта приложение рассчитает само.'; }
 
         function sharedFetch(path, opts) {
             const ctrl = new AbortController();
             const timer = setTimeout(() => ctrl.abort(), 7000);
-            const headers = Object.assign({ apikey: SHARED_DB.key, Authorization: 'Bearer ' + SHARED_DB.key }, (opts && opts.headers) || {});
+            const auth = { apikey: SHARED_DB.key };
+            if (/^eyJ/.test(SHARED_DB.key)) auth.Authorization = 'Bearer ' + SHARED_DB.key; // новые ключи sb_publishable_… идут только в apikey
+            const headers = Object.assign(auth, (opts && opts.headers) || {});
             return fetch(SHARED_DB.url.replace(/\/$/, '') + '/rest/v1/' + path, Object.assign({}, opts, { headers, signal: ctrl.signal }))
                 .finally(() => clearTimeout(timer));
         }
