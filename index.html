@@ -91,6 +91,11 @@
             font-size: 11px; font-weight: 700;
         }
 
+        .bottom-nav { transform: translateZ(0); }
+        .swipe-row, .bento-card, .trend-capsule, .manual-card { contain: layout style; }
+        .lite .swipe-row, .lite .bento-card { contain: layout style paint; }
+        .lite .bottom-nav { box-shadow: none; }
+        html { overscroll-behavior-y: none; }
         .lite *, .lite *::before, .lite *::after { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
         .lite .nav-blob::after { display: none; }
         .lite .nav-blob { left: 0; will-change: transform, width; box-shadow: none; }
@@ -1121,7 +1126,9 @@
                 }
                 let x = st.base + dx;
                 if (x > 0) x = x * 0.2; // небольшое сопротивление вправо
-                setX(st.row, x, false);
+                // Рисуем не чаще одного раза за кадр (на экранах 120–240 Гц события приходят чаще кадров)
+                st.px = x;
+                if (!st.raf) st.raf = requestAnimationFrame(() => { const q = st; if (!q) return; q.raf = 0; setX(q.row, q.px, false); });
                 const full = -x > st.w * 0.55;
                 if (full !== st.full) {
                     st.full = full;
@@ -1132,7 +1139,9 @@
             function end(e) {
                 if (!st || e.pointerId !== st.id) return;
                 const s = st; st = null;
+                if (s.raf) { cancelAnimationFrame(s.raf); s.raf = 0; }
                 if (!s.drag) return;
+                if (s.px !== undefined) setX(s.row, s.px, false);
                 suppressClick = true; setTimeout(() => { suppressClick = false; }, 60);
                 const x = s.row._x || 0;
                 if (-x > s.w * 0.55) { deleteRow(s.row); return; }
@@ -2071,6 +2080,19 @@
 
         let camIdle = null;
         let camAcquiring = null;
+        function waitForFrame(video, ms) {
+            return new Promise(res => {
+                let done = false;
+                const evs = ['loadeddata', 'playing', 'timeupdate', 'resize'];
+                let iv, to;
+                const fin = ok => { if (done) return; done = true; evs.forEach(e => video.removeEventListener(e, chk)); clearInterval(iv); clearTimeout(to); res(ok); };
+                function chk() { if (video.readyState >= 2 && video.videoWidth > 0) fin(true); }
+                evs.forEach(e => video.addEventListener(e, chk));
+                iv = setInterval(chk, 50);
+                to = setTimeout(() => fin(false), ms);
+                chk();
+            });
+        }
         // Один общий запрос камеры: его можно начать заранее (прогрев) и подхватить при открытии окна
         function acquireCamera() {
             if (camLive()) return Promise.resolve(mediaStream);
@@ -2134,13 +2156,20 @@
                 if (video.srcObject !== mediaStream) video.srcObject = mediaStream;
                 video.play().catch(() => {});
                 if (!video.classList.contains('ready')) {
-                    await new Promise(res => {
-                        let done = false; const fin = () => { if (!done) { done = true; res(); } };
-                        if (video.readyState >= 2 && video.videoWidth) fin();
-                        else if (video.requestVideoFrameCallback) video.requestVideoFrameCallback(() => setTimeout(fin, 60));
-                        else video.addEventListener('playing', () => setTimeout(fin, 200), { once: true });
-                        setTimeout(fin, 1200);
-                    });
+                    // Показываем окно только когда реально пришёл кадр; если камера «молчит» (бывает на Android) — перепривязываем поток, затем перезапрашиваем
+                    let ok = await waitForFrame(video, 1500);
+                    if (!ok && modal.classList.contains('open') && camLive()) {
+                        video.srcObject = null; video.srcObject = mediaStream; video.play().catch(() => {});
+                        ok = await waitForFrame(video, 2000);
+                    }
+                    if (!ok && modal.classList.contains('open')) {
+                        releaseCamera();
+                        await acquireCamera();
+                        if (!modal.classList.contains('open')) { releaseCamera(); return; }
+                        video.srcObject = mediaStream; video.play().catch(() => {});
+                        ok = await waitForFrame(video, 3000);
+                    }
+                    if (!ok) { scanMsg('Нет доступа к камере. Нажмите «Сфотографировать», чтобы снять через камеру телефона', true); return; }
                     video.classList.add('ready');
                 }
                 if (!warm) { try { mediaStream.getVideoTracks()[0].applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {}); } catch (e) {} }
