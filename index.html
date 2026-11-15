@@ -16,6 +16,10 @@
             --accent-pink: #FF2D55;
             --font-led: 'Courier New', Courier, monospace;
             --field-bg: #fff;
+            --blue: #007AFF;
+            --blue-shadow: rgba(0, 122, 255, 0.3);
+            --blob1: #4AA3FF;
+            --blob2: #2E92FF;
             --fill-1: rgba(0, 0, 0, 0.04);
             --fill-2: rgba(0, 0, 0, 0.06);
             --line: rgba(0, 0, 0, 0.1);
@@ -31,6 +35,10 @@
             --text-main: #F2F2F7;
             --text-secondary: #98989F;
             --field-bg: #2C2C2E;
+            --blue: #2A5F9E;
+            --blue-shadow: rgba(42, 95, 158, 0.25);
+            --blob1: #4A82C0;
+            --blob2: #3A70AE;
             --fill-1: rgba(255, 255, 255, 0.08);
             --fill-2: rgba(255, 255, 255, 0.12);
             --line: rgba(255, 255, 255, 0.16);
@@ -160,7 +168,7 @@
         }
         .manual-row button {
             padding: 13px 20px; border: none; border-radius: 14px;
-            background: #007AFF; color: #fff; font-weight: 600; font-size: 15px; cursor: pointer;
+            background: var(--blue); color: #fff; font-weight: 600; font-size: 15px; cursor: pointer;
         }
         .manual-row button:disabled { opacity: 0.5; }
 
@@ -217,7 +225,7 @@
             object-fit: cover; border-radius: 24px; opacity: 0; transition: opacity .3s;
         }
         /* Переливающееся свечение за окном камеры */
-        .cam-glow { position: absolute; inset: -8px; border-radius: 32px; overflow: hidden; z-index: 0; filter: blur(8px); opacity: .85; animation: camBreath 4s ease-in-out infinite; }
+        .cam-glow { position: absolute; inset: -8px; border-radius: 44px; overflow: hidden; z-index: 0; filter: blur(8px); opacity: .85; animation: camBreath 4s ease-in-out infinite; }
         .cam-plate { position: absolute; inset: 0; z-index: 2; background: #000; border-radius: 24px; }
         .cam-rim { position: absolute; inset: -2px; border-radius: 26px; overflow: hidden; z-index: 1; }
         .cam-glow::before, .cam-rim::before {
@@ -256,7 +264,7 @@
         .camera-msg { color: #fff; text-align: center; font-size: 14px; min-height: 36px; padding: 8px 4px; }
         .camera-controls { gap: 8px; }
         .btn-shot {
-            flex: 1.4; background: #007AFF; color: #fff; border: none;
+            flex: 1.4; background: var(--blue); color: #fff; border: none;
             padding: 14px 10px; border-radius: 14px; font-weight: 700; font-size: 15px;
         }
         .btn-file {
@@ -310,7 +318,7 @@
         .photo-btns .btn-photo-del { color: #FF3B30; }
         .btn-addprod {
             width: 100%; margin-top: 12px; padding: 14px; border: none; border-radius: 12px;
-            background: #007AFF; color: #fff; font-weight: 600; font-size: 15px; cursor: pointer;
+            background: var(--blue); color: #fff; font-weight: 600; font-size: 15px; cursor: pointer;
         }
         #add-modal, #detail-modal {
             display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -412,8 +420,8 @@
             -webkit-transform: translateZ(0); transform: translateZ(0);
             display: flex; flex-direction: column; align-items: center; gap: 10px;
             padding: 10px; border-radius: 34px;
-            background: #007AFF;
-            box-shadow: 0 8px 24px rgba(0, 122, 255, 0.3);
+            background: var(--blue);
+            box-shadow: 0 8px 24px var(--blue-shadow);
         }
         .nav-scan {
             display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
@@ -442,7 +450,7 @@
         .nav-blob {
             position: absolute; top: -2px; bottom: -2px; left: 0; width: 0;
             border-radius: 28px; pointer-events: none; z-index: 2;
-            background: linear-gradient(180deg, #4AA3FF, #2E92FF);
+            background: linear-gradient(180deg, var(--blob1), var(--blob2));
             box-shadow: 0 4px 12px rgba(0, 40, 120, 0.25);
         }
         /* переливающаяся кромка линзы (призма), ярче при движении */
