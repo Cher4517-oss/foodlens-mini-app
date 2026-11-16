@@ -212,15 +212,15 @@
         /* Camera modal */
         #camera-modal {
             display: flex; visibility: hidden; pointer-events: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 1000; flex-direction: column; justify-content: flex-start; padding: 20px;
+            background: var(--bg-color); z-index: 1000; flex-direction: column; justify-content: flex-start; padding: 20px;
             height: 100dvh; overflow: hidden; overscroll-behavior: none;
             padding-top: calc(20px + var(--safe-top)); padding-bottom: calc(20px + var(--safe-bottom));
         }
         #camera-feed { width: 100%; height: 65vh; object-fit: cover; border-radius: 24px; }
-        .camera-hint { color: #fff; text-align: center; font-weight: 600; padding-top: 10px; }
+        .camera-hint { color: var(--text-main); text-align: center; font-weight: 600; padding-top: 10px; }
         .camera-controls { display: flex; justify-content: center; align-items: center; }
         .btn-close-cam {
-            background: rgba(255,255,255,0.2); color: #fff; border: none;
+            background: var(--fill-2); color: var(--text-main); border: none;
             padding: 14px 28px; border-radius: 14px; font-weight: 600; font-size: 15px;
         }
 
@@ -232,7 +232,7 @@
         /* Переливающееся свечение за окном камеры */
         .cam-glow-in { position: absolute; inset: 0; border-radius: 44px; overflow: hidden; -webkit-clip-path: inset(0 round 44px); clip-path: inset(0 round 44px); transform: translateZ(0); }
         .cam-glow { position: absolute; inset: -8px; border-radius: 44px; z-index: 0; filter: blur(8px); opacity: .85; animation: camBreath 4s ease-in-out infinite; }
-        .cam-plate { position: absolute; inset: 0; z-index: 2; background: #000; border-radius: 24px; }
+        .cam-plate { position: absolute; inset: 0; z-index: 2; background: var(--bg-color); border-radius: 24px; }
         .cam-rim { position: absolute; inset: -2px; border-radius: 26px; overflow: hidden; -webkit-clip-path: inset(0 round 26px); clip-path: inset(0 round 26px); z-index: 1; }
         .cam-glow-in::before, .cam-rim::before {
             content: ''; position: absolute; left: 50%; top: 50%; width: 220%; aspect-ratio: 1; margin: 0;
@@ -261,20 +261,20 @@
         .camera-controls { flex: none; }
         .btn-flash {
             position: absolute; right: 0; width: 48px; height: 48px; border-radius: 50%; border: none; padding: 0;
-            background: rgba(255,255,255,0.2); color: #fff; display: flex; align-items: center; justify-content: center;
+            background: var(--fill-2); color: var(--text-main); display: flex; align-items: center; justify-content: center;
             -webkit-tap-highlight-color: transparent; transition: background-color .2s, color .2s;
         }
         .btn-flash svg { width: 24px; height: 24px; }
         .btn-flash.on { background: #FFD60A; color: #000; }
         .btn-flash.off-na { opacity: .35; }
-        .camera-msg { color: #fff; text-align: center; font-size: 14px; min-height: 36px; padding: 8px 4px; }
+        .camera-msg { color: var(--text-main); text-align: center; font-size: 14px; min-height: 36px; padding: 8px 4px; }
         .camera-controls { gap: 8px; }
         .btn-shot {
             flex: 1.4; background: var(--blue); color: #fff; border: none;
             padding: 14px 10px; border-radius: 14px; font-weight: 700; font-size: 15px;
         }
         .btn-file {
-            flex: 1; background: rgba(255,255,255,0.2); color: #fff; border: none;
+            flex: 1; background: var(--fill-2); color: var(--text-main); border: none;
             padding: 14px 10px; border-radius: 14px; font-weight: 600; font-size: 14px;
         }
         .camera-controls { position: relative; display: flex; justify-content: center; align-items: center; min-height: 60px; }
@@ -604,7 +604,7 @@
         <div class="camera-msg" id="camera-msg"></div>
         <div class="camera-controls">
             <button class="btn-close-cam" onclick="closeCameraScanner()" aria-label="Закрыть">
-                <svg viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round">
+                <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
                     <circle cx="24" cy="24" r="19"/>
                     <path d="M17 17 L31 31 M31 17 L17 31"/>
                 </svg>
