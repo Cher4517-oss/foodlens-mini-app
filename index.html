@@ -2452,11 +2452,11 @@
                     wait.classList.add('err');
                     wait.textContent = r.status === 429 ? trText('На сегодня вопросы закончились. Приходите завтра.')
                         : r.status === 403 ? trText('Нужна подписка Premium.')
-                        : trText('Не удалось получить ответ. Попробуйте ещё раз позже.');
+                        : trText('Не удалось получить ответ. Попробуйте ещё раз позже.') + ' (' + r.status + (j.error ? ' ' + j.error : '') + (j.detail ? ' ' + j.detail : '') + ')';
                 }
             } catch (e) {
                 coachMsgs.pop();
-                wait.classList.add('err'); wait.textContent = trText('Не удалось получить ответ. Попробуйте ещё раз позже.');
+                wait.classList.add('err'); wait.textContent = trText('Не удалось получить ответ. Попробуйте ещё раз позже.') + ' (' + (e && e.name === 'AbortError' ? 'timeout' : 'network') + ')';
             }
             coachSave();
             coachBusy = false; document.getElementById('co-send').disabled = false;
