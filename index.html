@@ -98,7 +98,7 @@
         .swipe-row, .bento-card, .trend-capsule, .manual-card { contain: layout style; }
         .lite .swipe-row, .lite .bento-card { contain: layout style paint; }
         .lite .bottom-nav { box-shadow: none; }
-        html { overscroll-behavior-y: none; }
+        html { overscroll-behavior-y: auto; } /* упругая прокрутка (резинка) на iPhone */
         .lite *, .lite *::before, .lite *::after { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
         .lite .nav-blob::after { display: none; }
         .lite .nav-blob { left: 0; will-change: transform, width; box-shadow: none; }
@@ -900,6 +900,8 @@
         const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
         if (tg) {
             try { tg.ready(); tg.expand(); } catch (e) {}
+            // Чтобы страница сама упруго подпрыгивала, а не сворачивала мини-приложение свайпом вниз
+            try { if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch (e) {}
             // Полноэкранный режим (Telegram 8.0+), на старых версиях остаётся обычное окно
             try {
                 if (tg.isVersionAtLeast && tg.isVersionAtLeast('8.0') && tg.requestFullscreen && !tg.isFullscreen) {
