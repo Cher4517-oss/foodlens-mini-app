@@ -2383,12 +2383,21 @@
         try { const c = JSON.parse(localStorage.getItem(COACH_KEY) || '[]'); if (Array.isArray(c)) coachMsgs = c.filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string').slice(-20); } catch (e) {}
         function coachSave() { try { localStorage.setItem(COACH_KEY, JSON.stringify(coachMsgs.slice(-20))); } catch (e) {} }
         function coGrow() { const t = document.getElementById('co-input'); t.style.height = 'auto'; t.style.height = Math.min(110, t.scrollHeight) + 'px'; }
+        // Показываем **жирный** как жирный, остальное — обычным текстом (без HTML, безопасно)
+        function coFmt(el, text) {
+            el.textContent = '';
+            String(text).replace(/^#{1,6}\s*/gm, '').split(/(\*\*[^*]+\*\*)/).forEach(part => {
+                const m = part.match(/^\*\*([^*]+)\*\*$/);
+                if (m) { const b = document.createElement('b'); b.textContent = m[1]; el.appendChild(b); }
+                else if (part) el.appendChild(document.createTextNode(part.replace(/\*\*/g, '')));
+            });
+        }
         function coAdd(role, text, cls) {
             const d = document.createElement('div');
             d.className = 'co-msg ' + (role === 'user' ? 'u' : 'a') + (cls ? ' ' + cls : '');
-            d.textContent = text;
+            if (role === 'user') d.textContent = text; else coFmt(d, text);
             document.getElementById('co-list').appendChild(d);
-            d.scrollIntoView({ block: 'end' });
+            d.scrollIntoView({ block: role === 'user' ? 'end' : 'start' });
             return d;
         }
         function coRender() {
@@ -2444,7 +2453,7 @@
                 clearTimeout(tm);
                 const j = await r.json().catch(() => ({}));
                 if (r.ok && j.reply) {
-                    wait.textContent = j.reply;
+                    coFmt(wait, j.reply); wait.scrollIntoView({ block: 'start' });
                     coachMsgs.push({ role: 'assistant', content: j.reply });
                     if (typeof j.left === 'number') document.getElementById('co-left').textContent = trText('Осталось вопросов') + ': ' + j.left;
                 } else {
@@ -2460,7 +2469,6 @@
             }
             coachSave();
             coachBusy = false; document.getElementById('co-send').disabled = false;
-            document.getElementById('co-list').lastElementChild && document.getElementById('co-list').lastElementChild.scrollIntoView({ block: 'end' });
         }
         function openProfile() {
             if (!IS_PREMIUM) return;
