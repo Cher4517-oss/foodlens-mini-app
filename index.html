@@ -2319,7 +2319,23 @@
                 esc(trText('Вода')) + ' ' + (n.water / 1000).toLocaleString(LANG === 'ar' ? 'en' : LANG, { maximumFractionDigits: 2 }) + ' ' + esc(trText('л'));
         }
         // Профиль доступен только с Premium (пока подписки нет — всегда false)
-        const IS_PREMIUM = false;
+        let IS_PREMIUM = false;
+        // Статус подписки приходит только с сервера (он проверяет подпись Telegram). В приложении его не храним.
+        async function loadPremium() {
+            try {
+                const idata = tg && tg.initData;
+                if (!idata || !SHARED_DB.url) return;
+                const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 8000);
+                const r = await fetch(SHARED_DB.url + '/functions/v1/me', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ initData: idata }), signal: ctrl.signal });
+                clearTimeout(t);
+                if (!r.ok) return;
+                const j = await r.json();
+                IS_PREMIUM = j.premium === true;
+                renderHome();
+                if (IS_PREMIUM && !profile) { try { if (!localStorage.getItem('ecoscans_pskip')) openProfile(); } catch (e) {} }
+            } catch (e) {}
+        }
+        setTimeout(loadPremium, 1200);
         function openProfile() {
             if (!IS_PREMIUM) return;
             const p = profile || {};
