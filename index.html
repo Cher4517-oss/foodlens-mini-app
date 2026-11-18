@@ -95,6 +95,9 @@
         }
 
         .bottom-nav { transform: translateZ(0); }
+        /* Когда открыта клавиатура: прячем нижнюю панель и даём странице запас снизу, чтобы поле можно было прокрутить выше клавиатуры */
+        html.kb .bottom-nav { display: none; }
+        html.kb body { padding-bottom: calc(var(--kb-h, 0px) + 160px); }
         .swipe-row, .bento-card, .trend-capsule, .manual-card { contain: layout style; }
         .lite .swipe-row, .lite .bento-card { contain: layout style paint; }
         .lite .bottom-nav { box-shadow: none; }
@@ -788,8 +791,8 @@
         </div>
         <div class="pr-state" id="pr-state"></div>
         <div class="pr-plans" id="pr-plans">
-            <button type="button" class="pr-plan" id="pl-month" onclick="pickPlan('month')"><small>Месяц</small><b>⭐ <i id="pl-month-n" style="font-style:normal">250</i></b><span>в месяц</span></button>
-            <button type="button" class="pr-plan on" id="pl-year" onclick="pickPlan('year')"><em><span style="display:inline;color:#fff;margin:0">Выгоднее</span></em><small>Год</small><b>⭐ <i id="pl-year-n" style="font-style:normal">1990</i></b><span><span style="display:inline;margin:0">в год</span> · <span id="pl-save" style="display:inline;margin:0"></span></span></button>
+            <button type="button" class="pr-plan" id="pl-month" onclick="pickPlan('month')"><small>Месяц</small><b>⭐ <i id="pl-month-n" style="font-style:normal">125</i></b><span>в месяц</span></button>
+            <button type="button" class="pr-plan on" id="pl-year" onclick="pickPlan('year')"><em><span style="display:inline;color:#fff;margin:0">Выгоднее</span></em><small>Год</small><b>⭐ <i id="pl-year-n" style="font-style:normal">1250</i></b><span><span style="display:inline;margin:0">в год</span> · <span id="pl-save" style="display:inline;margin:0"></span></span></button>
         </div>
         <button type="button" class="pr-cta" id="pr-cta" onclick="premiumCTA()">Попробовать 3 дня бесплатно</button>
         <button type="button" class="pr-alt" id="pr-alt" onclick="buyPlan()">Оформить сразу</button>
@@ -2448,7 +2451,7 @@
         // Профиль доступен только с Premium (пока подписки нет — всегда false)
         let IS_PREMIUM = false;
         // Статус подписки приходит только с сервера (он проверяет подпись Telegram). В приложении его не храним.
-        let PREM = { trial: true, prices: { month: 250, year: 1990 }, plan: null, exp: null };
+        let PREM = { trial: true, prices: { month: 125, year: 1250 }, plan: null, exp: null };
         let selPlan = 'year';
         async function callMe(action) {
             const idata = tg && tg.initData;
@@ -2746,12 +2749,28 @@
         setTimeout(() => { try { if (IS_PREMIUM && !profile && !localStorage.getItem('ecoscans_pskip')) openProfile(); } catch (e) {} }, 900);
 
 
+
+        // ---------- Клавиатура: поле ввода всегда видно ----------
+        (function () {
+            const root = document.documentElement, vv = window.visualViewport;
+            const isField = el => !!el && el.matches && el.matches('input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), textarea');
+            const upd = () => { if (!vv) return; root.style.setProperty('--kb-h', Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) + 'px'); };
+            if (vv) { vv.addEventListener('resize', upd); vv.addEventListener('scroll', upd); }
+            const show = t => { try { t.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {} };
+            document.addEventListener('focusin', e => {
+                if (!isField(e.target)) return;
+                root.classList.add('kb'); upd();
+                const t = e.target; [200, 450, 800].forEach(ms => setTimeout(() => { if (document.activeElement === t) show(t); }, ms));
+            });
+            document.addEventListener('focusout', () => { setTimeout(() => { if (!isField(document.activeElement)) root.classList.remove('kb'); }, 150); });
+        })();
+
         // ---------- Упругая прокрутка: страница «бьётся» о верх и низ ----------
         (function () {
             const MODALS = '#camera-modal.open, #coach-modal.open, #food-modal.open, #menu-modal.open, #add-modal, #detail-modal, #profile-modal';
             const area = () => document.querySelector('.screen.active');
             const maxY = () => Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-            const busy = () => { try { return [...document.querySelectorAll(MODALS)].some(m => m.classList.contains('open') || getComputedStyle(m).display !== 'none'); } catch (e) { return false; } };
+            const busy = () => { if (document.documentElement.classList.contains('kb')) return true; try { return [...document.querySelectorAll(MODALS)].some(m => m.classList.contains('open') || getComputedStyle(m).display !== 'none'); } catch (e) { return false; } };
             const D = () => window.innerHeight * 0.55;
             const rubber = x => { const d = D(); return (1 - 1 / (x * 0.55 / d + 1)) * d; };
             let anim = null;
@@ -2760,10 +2779,11 @@
                 try { if (anim) anim.cancel(); } catch (e) {}
                 el.style.transform = ''; el.style.willChange = '';
                 if (!from || !el.animate) return;
+                // Без «перелёта» через ноль: плавно вышли на край и так же плавно вернулись
                 anim = el.animate(soft
-                    ? [{ transform: 'translateY(0)' }, { transform: 'translateY(' + from + 'px)', offset: 0.28 }, { transform: 'translateY(' + (-from * 0.22) + 'px)', offset: 0.62 }, { transform: 'translateY(0)' }]
-                    : [{ transform: 'translateY(' + from + 'px)' }, { transform: 'translateY(0)' }],
-                    soft ? { duration: 560, easing: 'cubic-bezier(.25,.9,.35,1)' } : { duration: 620, easing: 'cubic-bezier(.2,1.55,.35,1)' });
+                    ? [{ transform: 'translate3d(0,0,0)', easing: 'cubic-bezier(.2,.7,.3,1)' }, { transform: 'translate3d(0,' + from + 'px,0)', offset: 0.32, easing: 'cubic-bezier(.45,0,.2,1)' }, { transform: 'translate3d(0,0,0)' }]
+                    : [{ transform: 'translate3d(0,' + from + 'px,0)' }, { transform: 'translate3d(0,0,0)' }],
+                    soft ? { duration: 700 } : { duration: 560, easing: 'cubic-bezier(.22,1,.36,1)' });
             }
             // 1. Тянем пальцем за край: резинка и отскок
             let lastY = 0, startX = 0, startY = 0, mode = null, raw = 0, dir = 0, off = 0, on = false, target = null;
@@ -2772,7 +2792,17 @@
                 on = true; mode = null; raw = 0; dir = 0; off = 0;
                 lastY = startY = e.touches[0].clientY; startX = e.touches[0].clientX;
                 target = area();
-                try { if (anim) { anim.cancel(); anim = null; } } catch (er) {}
+                try {
+                    if (anim && target) {
+                        const m = new DOMMatrixReadOnly(getComputedStyle(target).transform).m42;
+                        anim.cancel(); anim = null;
+                        if (Math.abs(m) > 0.5) {
+                            dir = m > 0 ? 1 : -1; off = m;
+                            const d = D(), y = Math.min(0.98, Math.abs(m) / d); raw = d * (1 / (1 - y) - 1) / 0.55;
+                            target.style.willChange = 'transform'; target.style.transform = 'translate3d(0,' + m.toFixed(1) + 'px,0)';
+                        }
+                    }
+                } catch (er) { try { if (anim) anim.cancel(); } catch (e2) {} anim = null; }
             }, { passive: true });
             document.addEventListener('touchmove', e => {
                 if (!on || !target) return;
@@ -2811,8 +2841,8 @@
                     const hitTop = y <= 0 && py > 0 && v < -450, hitBottom = m > 0 && y >= m - 1 && py < m - 1 && v > 450;
                     py = y; pt = now;
                     if (touching || now < cool || busy() || (!hitTop && !hitBottom)) return;
-                    cool = now + 500;
-                    const a = Math.min(46, Math.max(12, Math.abs(v) * 0.035));
+                    cool = now + 900;
+                    const a = Math.min(26, Math.max(8, Math.abs(v) * 0.018));
                     settle(area(), hitTop ? a : -a, true);
                 });
             }, { passive: true });
