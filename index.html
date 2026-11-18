@@ -95,6 +95,11 @@
         }
 
         .bottom-nav { transform: translateZ(0); }
+        /* Всё, что уходит под нижнюю панель, размыто; выше её верхней грани контент снова чёткий */
+        .nav-blur { position: fixed; left: 0; right: 0; bottom: 0; height: 120px; z-index: 99; pointer-events: none;
+            -webkit-backdrop-filter: blur(14px) saturate(1.1); backdrop-filter: blur(14px) saturate(1.1);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 10px); mask-image: linear-gradient(to bottom, transparent 0, #000 10px); }
+        html.kb .nav-blur { display: none; }
         /* Когда открыта клавиатура: прячем нижнюю панель и даём странице запас снизу, чтобы поле можно было прокрутить выше клавиатуры */
         html.kb .bottom-nav { display: none; }
         html.kb body { padding-bottom: calc(var(--kb-h, 0px) + 160px); }
@@ -814,6 +819,7 @@
         <div id="diary-container"></div>
     </div>
 
+    <div class="nav-blur" id="nav-blur" aria-hidden="true"></div>
     <nav class="bottom-nav">
         <div class="nav-scan" onclick="openCameraScanner()" onpointerdown="warmCamera()">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.500A2.500 2.500 0 0 1 6.500 6H8l1.200-2h5.600L16 6h1.500A2.500 2.500 0 0 1 20 8.500v8A2.500 2.500 0 0 1 17.500 19h-11A2.500 2.500 0 0 1 4 16.500z"/><circle cx="12" cy="12.500" r="3.300"/></svg>
@@ -2470,6 +2476,7 @@
         // Статус подписки приходит только с сервера (он проверяет подпись Telegram). В приложении его не храним.
         let PREM = { trial: true, prices: { month: 125, year: 1250 }, plan: null, exp: null };
         let selPlan = 'year';
+        let PREM_LOADED = !(typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData); // вне Telegram статус не узнать, сразу показываем тарифы
         async function callMe(action) {
             const idata = tg && tg.initData;
             if (!idata || !SHARED_DB.url) return null;
@@ -2488,7 +2495,11 @@
             renderHome();
             if (IS_PREMIUM && !profile) { try { if (!localStorage.getItem('ecoscans_pskip')) openProfile(); } catch (e) {} }
         }
-        async function loadPremium() { applyPremium(await callMe()); }
+        async function loadPremium() {
+            const j = await callMe();
+            PREM_LOADED = true;
+            if (j) applyPremium(j); else renderPremiumUI();
+        }
         function pickPlan(k) { selPlan = k; haptic('select'); renderPremiumUI(); }
         function renderPremiumUI() {
             const m = PREM.prices.month, y = PREM.prices.year;
@@ -2498,6 +2509,11 @@
             document.getElementById('pl-month').classList.toggle('on', selPlan === 'month');
             document.getElementById('pl-year').classList.toggle('on', selPlan === 'year');
             const cta = document.getElementById('pr-cta'), alt = document.getElementById('pr-alt'), st = document.getElementById('pr-state'), pl = document.getElementById('pr-plans');
+            if (!PREM_LOADED) {
+                pl.style.display = 'none'; alt.style.display = 'none'; st.style.display = 'none';
+                cta.textContent = '…'; cta.style.opacity = '0.55'; cta.style.pointerEvents = 'none'; return;
+            }
+            cta.style.opacity = ''; cta.style.pointerEvents = '';
             if (IS_PREMIUM) {
                 pl.style.display = 'none'; alt.style.display = 'none'; cta.textContent = trText('Открыть ИИ-нутрициолога');
                 const d = PREM.exp ? new Date(PREM.exp).toLocaleDateString(LANG === 'ar' ? 'en' : LANG) : '';
@@ -2537,7 +2553,14 @@
                 });
             } catch (e) { toast('Не удалось открыть оплату'); payBusy = false; }
         }
-        setTimeout(() => { renderPremiumUI(); loadPremium(); }, 1200);
+        // Высота размытой зоны = от верхней грани панели до низа экрана
+        (function () {
+            const nav = document.querySelector('.bottom-nav'), bl = document.getElementById('nav-blur');
+            function fit() { const r = nav.getBoundingClientRect(); if (r.height) bl.style.height = Math.ceil(window.innerHeight - r.top) + 'px'; }
+            fit(); window.addEventListener('resize', fit); setTimeout(fit, 300); setTimeout(fit, 1500);
+            if (window.visualViewport) window.visualViewport.addEventListener('resize', fit);
+        })();
+        renderPremiumUI(); loadPremium();
 
 
 
