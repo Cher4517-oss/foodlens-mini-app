@@ -197,6 +197,36 @@
             flex: 1; min-width: 0; padding: 13px 14px; font-size: 17px;
             border: 1px solid var(--line); border-radius: 14px; background: var(--field-bg); outline: none;
         }
+        /* Радужное свечение у нижней кромки поля, пока в нём курсор */
+        .mi-wrap { position: relative; flex: 1; min-width: 0; display: flex; }
+        .mi-wrap input { flex: 1; min-width: 0; }
+        .mi-glow { position: absolute; inset: 0; border-radius: 14px; overflow: hidden; pointer-events: none; opacity: 0; transition: opacity .6s ease; }
+        .mi-wrap:focus-within .mi-glow { opacity: 1; }
+        .mi-glow::before { content: ''; position: absolute; left: -30%; right: -30%; bottom: -14px; height: 70%; filter: blur(7px); opacity: .9;
+            background: radial-gradient(22% 80% at 22% 100%, #34c759, transparent 75%), radial-gradient(20% 90% at 40% 100%, #ffb340, transparent 75%), radial-gradient(20% 100% at 52% 100%, #ff4fa0, transparent 75%), radial-gradient(22% 80% at 68% 100%, #6c5cff, transparent 75%), radial-gradient(20% 70% at 82% 100%, #34c3ff, transparent 75%);
+            animation: miDrift 3.4s ease-in-out infinite; }
+        .mi-glow::after { content: ''; position: absolute; inset: 0; border-radius: 14px; padding: 1.5px;
+            background: linear-gradient(90deg, transparent 0%, #34c759 22%, #ffb340 40%, #ff4fa0 56%, #6c5cff 74%, #34c3ff 88%, transparent 100%) 0 0 / 220% 100%;
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); mask-composite: exclude;
+            -webkit-mask-image: linear-gradient(#000 0 0), linear-gradient(to bottom, transparent 35%, #000 100%); animation: miRim 3.4s ease-in-out infinite; }
+        @keyframes miDrift { 0% { transform: translateX(-12%) scaleY(.7); opacity: .25; } 35% { opacity: 1; } 55% { transform: translateX(6%) scaleY(1.1); opacity: .95; } 100% { transform: translateX(14%) scaleY(.75); opacity: .2; } }
+        @keyframes miRim { 0% { background-position: 0 0; opacity: .3; } 40% { opacity: 1; } 100% { background-position: 100% 0; opacity: .3; } }
+        @media (prefers-reduced-motion: reduce) { .mi-glow::before, .mi-glow::after { animation: none; } }
+        /* То же свечение вокруг всей карточки ввода штрихкода, работает всегда; на поле его больше нет */
+        .mi-glow { display: none; }
+        .manual-card { position: relative; }
+        .manual-card > label, .manual-card > .manual-row { position: relative; z-index: 1; }
+        .mc-glow { position: absolute; inset: 0; border-radius: 22px; overflow: hidden; pointer-events: none; z-index: 0; }
+        .mc-glow::before { content: ''; position: absolute; left: -30%; right: -30%; bottom: -22px; height: 62%; filter: blur(12px); opacity: .9;
+            background: radial-gradient(22% 80% at 22% 100%, #34c759, transparent 75%), radial-gradient(20% 90% at 40% 100%, #ffb340, transparent 75%), radial-gradient(20% 100% at 52% 100%, #ff4fa0, transparent 75%), radial-gradient(22% 80% at 68% 100%, #6c5cff, transparent 75%), radial-gradient(20% 70% at 82% 100%, #34c3ff, transparent 75%);
+            animation: miDrift 3.6s ease-in-out infinite; }
+        .mc-glow::after { content: ''; position: absolute; inset: 0; border-radius: 22px; padding: 1.5px;
+            background: linear-gradient(90deg, transparent 0%, #34c759 22%, #ffb340 40%, #ff4fa0 56%, #6c5cff 74%, #34c3ff 88%, transparent 100%) 0 0 / 220% 100%;
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); mask-composite: exclude;
+            -webkit-mask-image: linear-gradient(#000 0 0), linear-gradient(to bottom, transparent 35%, #000 100%); animation: miRim 3.6s ease-in-out infinite; }
+        html:not(.dark) .mc-glow { opacity: .6; }
+        .lite .mc-glow { display: none; }
+        @media (prefers-reduced-motion: reduce) { .mc-glow::before, .mc-glow::after { animation: none; } }
         .manual-row button {
             padding: 13px 20px; border: none; border-radius: 14px;
             background: var(--blue); color: #fff; font-weight: 600; font-size: 15px; cursor: pointer;
@@ -647,13 +677,14 @@
         @keyframes coSpin { to { --a: 360deg; } }
         .co-field { position: relative; flex: 1; display: flex; min-width: 0; }
         .co-field textarea { flex: 1; min-width: 0; }
-        .co-glow { position: absolute; inset: -2px; border-radius: 25px; padding: 2px; pointer-events: none; opacity: 0; transition: opacity .5s ease;
-            background: conic-gradient(from var(--a), transparent 0%, #34c759 8%, #34c3ff 18%, #6c5cff 30%, #ff4fa0 44%, #ffb340 54%, transparent 66%, transparent 100%);
+        .co-glow { position: absolute; inset: 0; border-radius: 23px; padding: 1.2px; pointer-events: none; opacity: 0; transition: opacity .35s ease;
+            background: conic-gradient(from var(--a), transparent 0%, #34c759 9%, #34c3ff 20%, #6c5cff 32%, #ff4fa0 45%, #ffb340 55%, transparent 68%, transparent 100%);
             -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); mask-composite: exclude;
-            animation: coSpin 2.6s linear infinite; }
-        .co-glow.soft { inset: -3px; padding: 6px; filter: blur(7px); border-radius: 27px; }
-        .co-bar.busy .co-glow { opacity: 1; }
-        .co-bar.busy .co-glow.soft { opacity: .75; }
+            animation: coSpin 5s linear infinite; }
+        /* мягкое свечение внутри, вдоль краёв */
+        .co-glow.soft { padding: 6px; filter: blur(9px); clip-path: inset(0 round 23px); animation-duration: 5s; }
+        .co-bar:not(.busy) .co-glow { opacity: .85; }
+        .co-bar:not(.busy) .co-glow.soft { opacity: .4; }
         @media (prefers-reduced-motion: reduce) { .co-glow { animation: none; } }
         .co-send { flex: none; width: 46px; height: 46px; border-radius: 50%; border: none; background: var(--blue); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
         .co-send:disabled { opacity: .4; }
@@ -803,9 +834,10 @@
         </div>
 
         <div class="manual-card">
+            <div class="mc-glow"></div>
             <label for="barcode-input">Введите штрихкод</label>
             <div class="manual-row">
-                <input id="barcode-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="14" placeholder="4600000000000">
+                <div class="mi-wrap"><input id="barcode-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="14" placeholder="4600000000000"><div class="mi-glow"></div></div>
                 <button id="barcode-btn" onclick="lookupFromInput()">Найти</button>
             </div>
         </div>
